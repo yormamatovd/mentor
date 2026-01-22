@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="org.algo.mentor.controllers.LessonsController"
+           stylesheets="@../styles/custom.css">
+
+    <!-- Group Selection View -->
+    <VBox fx:id="groupSelectionView" spacing="20.0" style="-fx-background-color: #f8f9fc;">
+        <padding>
+            <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+        </padding>
+        
+        <VBox spacing="5.0">
+            <Label text="Darslar" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+            <Label text="Dars o'tish uchun guruhni tanlang" style="-fx-font-size: 13; -fx-text-fill: #718096;"/>
+        </VBox>
+
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+            <FlowPane fx:id="groupsFlowPane" hgap="20.0" vgap="20.0">
+                <padding>
+                    <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                </padding>
+            </FlowPane>
+        </ScrollPane>
+    </VBox>
+
+    <!-- Lesson History View (Hidden by default) -->
+    <VBox fx:id="lessonHistoryView" spacing="20.0" style="-fx-background-color: #f8f9fc;" visible="false">
+        <padding>
+            <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="20.0">
+            <Button text="← Orqaga" onAction="#onBackToGroups" prefWidth="150.0" minWidth="150.0" styleClass="btn" style="-fx-background-color: #edf2f7; -fx-text-fill: #4a5568;"/>
+            <VBox spacing="2.0" HBox.hgrow="ALWAYS" maxWidth="800.0">
+                <Label fx:id="historyGroupTitleLabel" text="Guruh nomi" wrapText="true" maxWidth="800.0" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+                <Label text="Darslar tarixi" style="-fx-font-size: 13; -fx-text-fill: #718096;"/>
+            </VBox>
+        </HBox>
+
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+            <VBox fx:id="historyRowsContainer" spacing="10" style="-fx-padding: 5;"/>
+        </ScrollPane>
+    </VBox>
+
+    <!-- Lesson Detail View (Hidden by default) -->
+    <VBox fx:id="lessonDetailView" spacing="20.0" style="-fx-background-color: #f8f9fc;" visible="false">
+        <padding>
+            <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+        </padding>
+
+        <HBox alignment="CENTER_LEFT" spacing="12.0" minHeight="50.0" fillHeight="false">
+            <Button text="← Orqaga" onAction="#onBackToHistoryOrGroups" prefWidth="150.0" minWidth="150.0" styleClass="btn" style="-fx-background-color: #edf2f7; -fx-text-fill: #4a5568;"/>
+            <VBox spacing="0" minWidth="250.0" maxWidth="250.0" >
+                <Label fx:id="groupTitleLabel" text="Guruh nomi" wrapText="true" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+                <Label fx:id="dateLabel" text="Bugungi sana" wrapText="true" style="-fx-font-size: 13; -fx-text-fill: #718096;"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <HBox spacing="10.0" alignment="CENTER_RIGHT">
+                <HBox fx:id="deleteContainer" spacing="8.0" alignment="CENTER_LEFT" visible="false" managed="false">
+                    <Label fx:id="deleteWarningLabel" text="Ushbu dars mutloq o'chiriladi!" wrapText="true" maxWidth="150.0" style="-fx-text-fill: #e53e3e; -fx-font-size: 11; -fx-font-weight: bold;" visible="false" managed="false"/>
+                    <Button fx:id="deleteButton" text="Darsni o'chirish" onAction="#onDeleteLesson" styleClass="btn" style="-fx-background-color: #fff5f5; -fx-text-fill: #c53030; -fx-border-color: #feb2b2; -fx-border-radius: 5;"/>
+                </HBox>
+                <Button fx:id="enableEditButton" text="O'zgartirishni ochish" onAction="#onEnableEdit" styleClass="btn" style="-fx-background-color: #ebf8ff; -fx-text-fill: #3182ce;" managed="false"/>
+                <HBox fx:id="autoSaveContainer" spacing="8.0" alignment="CENTER_LEFT" managed="false" styleClass="auto-save-badge">
+                    <Region fx:id="autoSaveIndicator" styleClass="save-indicator"/>
+                    <Label text="Avto saqlash" style="-fx-font-size: 12; -fx-text-fill: #4a5568; -fx-font-weight: 500;"/>
+                </HBox>
+                <StackPane fx:id="autoSaveToggle" onMouseClicked="#onToggleAutoSave" styleClass="toggle-switch" managed="false">
+                    <Region fx:id="toggleBackground" styleClass="toggle-background"/>
+                    <Region fx:id="toggleThumb" styleClass="toggle-thumb"/>
+                </StackPane>
+                <Button fx:id="saveButton" text="Saqlash" onAction="#onSaveLesson" styleClass="btn, btn-primary" managed="false"/>
+            </HBox>
+        </HBox>
+
+        <VBox VBox.vgrow="ALWAYS" spacing="0" style="-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #e2e8f0; -fx-border-radius: 10; -fx-border-width: 1;">
+            <!-- Header -->
+            <HBox spacing="10" style="-fx-background-color: #f7fafc; -fx-background-radius: 10 10 0 0; -fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0;">
+                <padding>
+                    <Insets top="10" right="15" bottom="10" left="15"/>
+                </padding>
+                <Label text="O'quvchi ismi" minWidth="150.0" maxWidth="Infinity" HBox.hgrow="ALWAYS" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
+                <Label text="Keldi" minWidth="80.0" prefWidth="80.0" maxWidth="80.0" alignment="CENTER" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
+                <HBox fx:id="homeworkSortBtn" spacing="5" alignment="CENTER_LEFT" minWidth="120.0" prefWidth="120.0" maxWidth="120.0" onMouseClicked="#onSortHomework" style="-fx-cursor: hand;">
+                    <Label text="Uyga vazifa" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
+                    <Label fx:id="homeworkSortIcon" text="↕" style="-fx-text-fill: #a0aec0;"/>
+                </HBox>
+                <Label text="Test nomi" minWidth="150.0" maxWidth="Infinity" HBox.hgrow="ALWAYS" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
+                <HBox fx:id="testScoreSortBtn" spacing="5" alignment="CENTER_LEFT" minWidth="120.0" prefWidth="120.0" maxWidth="120.0" onMouseClicked="#onSortTestScore" style="-fx-cursor: hand;">
+                    <Label text="Test bali" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
+                    <Label fx:id="testScoreSortIcon" text="↕" style="-fx-text-fill: #a0aec0;"/>
+                </HBox>
+            </HBox>
+
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+                <VBox fx:id="lessonRowsContainer" spacing="0" style="-fx-background-color: white;"/>
+            </ScrollPane>
+        </VBox>
+        
+        <HBox alignment="CENTER_RIGHT">
+            <Label text="* O'zgarishlar kiritilganda tizim ularni avtomatik saqlab boradi" style="-fx-font-size: 11; -fx-text-fill: #a0aec0; -fx-font-style: italic;"/>
+        </HBox>
+    </VBox>
+</StackPane>

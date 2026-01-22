@@ -1,0 +1,32 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Maven: javafx:run" type="MavenRunConfiguration" factoryName="Maven">
+    <MavenSettings>
+      <option name="myGeneralSettings" />
+      <option name="myRunnerSettings" />
+      <option name="myDeltaFilter" />
+      <option name="myFiltersInfo">
+        <MavenFiltersProjectConfiguration>
+          <option name="filters">
+            <set />
+          </option>
+        </MavenFiltersProjectConfiguration>
+      </option>
+    </MavenSettings>
+    <method v="2" />
+    <RunnerSettings RunnerId="MavenRunner" />
+    <ConfigurationWrapper RunnerId="MavenRunner" />
+    <option name="PROJECT_PATH" value="$PROJECT_DIR$" />
+    <option name="GOALS" value="clean javafx:run" />
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <option name="PASS_PARENT_ENVS" value="true" />
+    <option name="MODULE_NAME" />
+    <option name="RUN_ON_FRAMEWORK_STARTUP_DEBUG" value="false" />
+    <option name="USE_EXT_CONSOLE" value="false" />
+    <option name="USE_MODULE_SDK" value="false" />
+    <option name="SDK_HOME" />
+    <option name="WORKING_DIRECTORY_IS_MODULE_SDK" value="false" />
+    <option name="SHOW_CONSOLE_ON_STD_ERR" value="false" />
+    <option name="SHOW_CONSOLE_ON_STD_OUT" value="false" />
+  </configuration>
+</component>
