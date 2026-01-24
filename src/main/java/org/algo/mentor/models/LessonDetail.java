@@ -9,19 +9,18 @@ public class LessonDetail {
     private String studentName;
     private BooleanProperty attendance = new SimpleBooleanProperty();
     private ObjectProperty<Double> homeworkScore = new SimpleObjectProperty<>();
-    private StringProperty testName = new SimpleStringProperty();
+    private StringProperty homeworkNote = new SimpleStringProperty("");
     private ObjectProperty<Double> testScore = new SimpleObjectProperty<>();
 
     public LessonDetail(int id, int lessonId, int studentId, String studentName, 
-                        boolean attendance, Double homeworkScore, 
-                        String testName, Double testScore) {
+                        boolean attendance, Double homeworkScore, String homeworkNote, Double testScore) {
         this.id = id;
         this.lessonId = lessonId;
         this.studentId = studentId;
         this.studentName = studentName;
         this.attendance.set(attendance);
         this.homeworkScore.set(homeworkScore);
-        this.testName.set(testName);
+        this.homeworkNote.set(homeworkNote);
         this.testScore.set(testScore);
     }
 
@@ -81,16 +80,16 @@ public class LessonDetail {
         this.homeworkScore.set(homeworkScore);
     }
 
-    public String getTestName() {
-        return testName.get();
+    public String getHomeworkNote() {
+        return homeworkNote.get();
     }
 
-    public StringProperty testNameProperty() {
-        return testName;
+    public StringProperty homeworkNoteProperty() {
+        return homeworkNote;
     }
 
-    public void setTestName(String testName) {
-        this.testName.set(testName);
+    public void setHomeworkNote(String homeworkNote) {
+        this.homeworkNote.set(homeworkNote);
     }
 
     public Double getTestScore() {

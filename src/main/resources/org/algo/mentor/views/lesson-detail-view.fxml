@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Text?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<ScrollPane fitToWidth="true" style="-fx-background-color: #f1f5f9;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+    <content>
+        <VBox spacing="30.0" styleClass="card" stylesheets="@../styles/custom.css">
+            <padding>
+                <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+            </padding>
+            
+            <children>
+                <!-- Dars Ma'lumotlari Sarlavhasi -->
+                <HBox alignment="CENTER_LEFT" spacing="15.0">
+                    <children>
+                        <Label styleClass="card-title" text="Dars ma'lumotlari" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button styleClass="btn-primary" text="Saqlash" />
+                    </children>
+                </HBox>
+
+                <!-- TESTLAR BO'LIMI -->
+                <VBox spacing="15.0">
+                    <children>
+                        <HBox styleClass="section-toggle-header">
+                            <children>
+                                <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Testlar" />
+                                <CheckBox fx:id="hasTestsToggle" selected="true" styleClass="toggle-switch" text="Testlar bor" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Button fx:id="addTestGroupBtn" styleClass="btn-add-group" text="Yangi test guruhi qo'shish" visible="${hasTestsToggle.selected}">
+                                    <graphic>
+                                        <FontIcon iconLiteral="mdmz-add_circle_outline" iconColor="white" iconSize="18" />
+                                    </graphic>
+                                </Button>
+                            </children>
+                        </HBox>
+
+                        <!-- Test Guruhlari Container -->
+                        <VBox fx:id="testGroupsContainer" spacing="20.0" visible="${hasTestsToggle.selected}" managed="${hasTestsToggle.selected}">
+                            <children>
+                                <!-- Misol uchun bitta Test Guruhi bloki -->
+                                <VBox styleClass="group-block">
+                                    <children>
+                                        <HBox alignment="CENTER_LEFT" spacing="15.0">
+                                            <children>
+                                                <TextField promptText="Test mavzusini kiriting (masalan: Jahon adabiyoti)" styleClass="group-topic-field" HBox.hgrow="ALWAYS" />
+                                                <Button style="-fx-background-color: #ef4444; -fx-text-fill: white; -fx-background-radius: 5;" text="O'chirish" />
+                                            </children>
+                                        </HBox>
+                                        
+                                        <!-- Jadval Sarlavhasi -->
+                                        <HBox spacing="15.0" style="-fx-padding: 10 0 5 15;">
+                                            <children>
+                                                <Label prefWidth="250.0" styleClass="header-label" text="O'quvchi F.I.Sh" />
+                                                <Label prefWidth="180.0" styleClass="header-label" text="Variant" />
+                                                <Label prefWidth="90.0" styleClass="header-label" text="To'g'ri javob" />
+                                                <Label styleClass="header-label" text="Ball" />
+                                            </children>
+                                        </HBox>
+
+                                        <!-- O'quvchilar Ro'yxati -->
+                                        <VBox spacing="5.0">
+                                            <children>
+                                                <!-- O'quvchi Qatori (Mock Data 1) -->
+                                                <HBox styleClass="student-row">
+                                                    <children>
+                                                        <Label prefWidth="250.0" styleClass="student-name" text="Eshnazarov Shoxrux" />
+                                                        <TextField promptText="Variant" styleClass="input-medium" text="A" />
+                                                        <TextField promptText="0" styleClass="input-small" text="16" />
+                                                        <Label styleClass="score-label" text="32.0" />
+                                                    </children>
+                                                </HBox>
+                                                
+                                                <!-- O'quvchi Qatori (Mock Data 2) -->
+                                                <HBox styleClass="student-row">
+                                                    <children>
+                                                        <Label prefWidth="250.0" styleClass="student-name" text="Karimova Dilnoza" />
+                                                        <TextField promptText="Variant" styleClass="input-medium" text="B" />
+                                                        <TextField promptText="0" styleClass="input-small" text="18" />
+                                                        <Label styleClass="score-label" text="36.0" />
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+
+                <Separator />
+
+                <!-- SAVOLLAR BO'LIMI -->
+                <VBox spacing="15.0">
+                    <children>
+                        <HBox styleClass="section-toggle-header">
+                            <children>
+                                <Label style="-fx-font-size: 18px; -fx-font-weight: bold;" text="Savollar" />
+                                <CheckBox fx:id="hasQuestionsToggle" selected="false" styleClass="toggle-switch" text="Savollar bor" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Button fx:id="addQuestionGroupBtn" styleClass="btn-add-group" text="Yangi savollar guruhi qo'shish" visible="${hasQuestionsToggle.selected}">
+                                    <graphic>
+                                        <FontIcon iconLiteral="mdmz-add_circle_outline" iconColor="white" iconSize="18" />
+                                    </graphic>
+                                </Button>
+                            </children>
+                        </HBox>
+
+                        <!-- Savol Guruhlari Container -->
+                        <VBox fx:id="questionGroupsContainer" spacing="20.0" visible="${hasQuestionsToggle.selected}" managed="${hasQuestionsToggle.selected}">
+                            <children>
+                                <!-- Yangi guruhlar shu yerga dinamik qo'shiladi -->
+                                <Label style="-fx-text-fill: #94a3b8; -fx-font-style: italic;" text="Hozircha savollar guruhlari yo'q. Qo'shish uchun tugmani bosing." />
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+
+            </children>
+        </VBox>
+    </content>
+</ScrollPane>
