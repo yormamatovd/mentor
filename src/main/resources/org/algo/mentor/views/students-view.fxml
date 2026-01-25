@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="org.algo.mentor.controllers.StudentsController"
+           stylesheets="@../styles/custom.css">
+    
+    <!-- Main Content -->
+    <VBox spacing="20.0" style="-fx-background-color: #f8f9fc;">
+        <padding>
+            <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+        </padding>
+        
+        <!-- Header & Add Button -->
+        <HBox alignment="CENTER_LEFT" spacing="20.0">
+            <VBox spacing="5.0">
+                <Label text="O'quvchilarni boshqarish" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+                <Label text="O'quvchilar ro'yxati va ularning holati" style="-fx-font-size: 13; -fx-text-fill: #718096;"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="+ Yangi o'quvchi" onAction="#onAddStudentClick" styleClass="btn, btn-primary"/>
+        </HBox>
+        
+        <!-- Filter Bar -->
+        <HBox spacing="15.0" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 0); -fx-border-color: #edf2f7; -fx-border-radius: 10;">
+            <VBox spacing="5.0">
+                <Label text="Ism yoki Familya" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
+                <TextField fx:id="nameFilterField" promptText="Qidirish..." prefWidth="250.0" styleClass="form-control"/>
+            </VBox>
+            
+            <VBox spacing="5.0">
+                <Label text="Telefon" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
+                <TextField fx:id="phoneFilterField" promptText="+998..." prefWidth="180.0" styleClass="form-control"/>
+            </VBox>
+            
+            <VBox spacing="5.0">
+                <Label text="Holati" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
+                <ComboBox fx:id="statusFilterCombo" prefWidth="150.0" styleClass="form-control"/>
+            </VBox>
+            
+            <VBox spacing="5.0">
+                <Label text="Guruh" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
+                <ComboBox fx:id="groupFilterCombo" prefWidth="220.0" styleClass="form-control"/>
+            </VBox>
+        </HBox>
+        
+        <!-- Student Cards List -->
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+            <FlowPane fx:id="studentsFlowPane" hgap="20.0" vgap="20.0">
+                <padding>
+                    <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                </padding>
+            </FlowPane>
+        </ScrollPane>
+    </VBox>
+    
+    <!-- Overlay for sidebars -->
+    <Pane fx:id="overlayPane" visible="false" onMouseClicked="#closeSidebars" style="-fx-background-color: rgba(0,0,0,0.3);"/>
+    
+    <!-- Student Edit Sidebar -->
+    <VBox fx:id="studentSidebar" maxWidth="400.0" prefWidth="400.0" spacing="20.0" 
+          styleClass="sidebar-right" 
+          translateX="400.0" StackPane.alignment="CENTER_RIGHT">
+        <padding>
+            <Insets bottom="30.0" left="25.0" right="25.0" top="30.0" />
+        </padding>
+        <HBox alignment="CENTER_LEFT" style="-fx-padding: 0 0 10 0; -fx-border-color: #eee; -fx-border-width: 0 0 1 0;">
+            <Label text="O'quvchi ma'lumotlari" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button onAction="#closeSidebars" styleClass="close-button" prefWidth="28" prefHeight="28">
+                <graphic>
+                    <Label text="✕" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #95a5a6;"/>
+                </graphic>
+            </Button>
+        </HBox>
+        
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+            <VBox spacing="15.0">
+                <padding>
+                    <Insets top="16" right="24" bottom="16" left="24"/>
+                </padding>
+                <VBox spacing="5.0">
+                    <Label text="Ism va Familya" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <TextField fx:id="fullNameField" promptText="Ism va familyani kiriting" styleClass="form-control"/>
+                </VBox>
+                <VBox spacing="5.0">
+                    <Label text="Telefon" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <TextField fx:id="phoneField" promptText="+998..." styleClass="form-control"/>
+                </VBox>
+                <VBox spacing="5.0">
+                    <Label text="Telegram Username" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <TextField fx:id="telegramField" promptText="@username" styleClass="form-control"/>
+                </VBox>
+                
+                <Separator>
+                    <padding>
+                        <Insets top="10.0" bottom="10.0"/>
+                    </padding>
+                </Separator>
+                
+                <Label text="Ota-ona ma'lumotlari" style="-fx-font-weight: bold; -fx-text-fill: #2c3e50; -fx-font-size: 15;"/>
+                <VBox spacing="5.0">
+                    <Label text="Ismi" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <TextField fx:id="parentNameField" promptText="Ota-onasining ismi" styleClass="form-control"/>
+                </VBox>
+                <VBox spacing="5.0">
+                    <Label text="Telefoni" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <TextField fx:id="parentPhoneField" promptText="+998..." styleClass="form-control"/>
+                </VBox>
+                <VBox spacing="5.0">
+                    <Label text="Telegrami" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <TextField fx:id="parentTelegramField" promptText="@username" styleClass="form-control"/>
+                </VBox>
+                
+                <VBox spacing="5.0">
+                    <Label text="Holati" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <HBox spacing="10.0" alignment="CENTER_LEFT" style="-fx-background-color: #f8f9fa; -fx-padding: 10; -fx-background-radius: 5;">
+                        <CheckBox fx:id="isActiveCheck" onAction="#onStatusChange"/>
+                        <Label fx:id="statusLabel" text="Faol" style="-fx-font-weight: bold;"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </ScrollPane>
+        
+        <VBox spacing="10.0">
+            <padding>
+                <Insets top="10" />
+            </padding>
+            <VBox fx:id="deleteConfirmBox" visible="false" managed="false" spacing="10.0" style="-fx-background-color: #fff5f5; -fx-padding: 15; -fx-border-color: #feb2b2; -fx-border-radius: 5; -fx-background-radius: 5;">
+                <Label text="Siz haqiqatdan ham ushbu o'quvchini o'chirmoqchimisiz?" wrapText="true" style="-fx-text-fill: #c53030; -fx-font-weight: bold; -fx-font-size: 12;"/>
+                <HBox spacing="10.0">
+                    <Button text="Ha, o'chirilsin" onAction="#onConfirmDeleteClick" styleClass="btn, btn-danger" prefWidth="Infinity"/>
+                    <Button text="Yo'q, o'chirilmasin" onAction="#onCancelDeleteClick" styleClass="btn, btn-default" prefWidth="Infinity"/>
+                </HBox>
+            </VBox>
+            
+            <HBox fx:id="actionButtonsBox" spacing="10.0">
+                <Button fx:id="deleteBtn" text="O'chirish" onAction="#onDeleteStudentClick" styleClass="btn, btn-danger" prefWidth="120"/>
+                <Region HBox.hgrow="ALWAYS" />
+                <Button text="Bekor qilish" onAction="#closeSidebars" styleClass="btn, btn-default" prefWidth="100"/>
+                <Button text="Saqlash" onAction="#onSaveStudentClick" styleClass="btn, btn-primary" prefWidth="100"/>
+            </HBox>
+        </VBox>
+    </VBox>
+    
+    <!-- Payment Sidebar -->
+    <VBox fx:id="paymentSidebar" maxWidth="450.0" prefWidth="450.0" spacing="20.0" 
+          styleClass="sidebar-right" 
+          translateX="450.0" StackPane.alignment="CENTER_RIGHT">
+        <padding>
+            <Insets bottom="30.0" left="25.0" right="25.0" top="30.0" />
+        </padding>
+        <HBox alignment="CENTER_LEFT" style="-fx-padding: 0 0 10 0; -fx-border-color: #eee; -fx-border-width: 0 0 1 0;">
+            <VBox>
+                <Label text="To'lovlar tarixi" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+                <Label fx:id="paymentStudentNameLabel" text="Talaba ismi" style="-fx-text-fill: #7f8c8d; -fx-font-size: 13;"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button onAction="#closeSidebars" styleClass="close-button" prefWidth="28" prefHeight="28">
+                <graphic>
+                    <Label text="✕" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #95a5a6;"/>
+                </graphic>
+            </Button>
+        </HBox>
+        
+        <!-- New Payment Form -->
+        <VBox spacing="10.0" style="-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 5; -fx-border-color: #e9ecef; -fx-border-radius: 5;">
+            <Label text="Yangi to'lov" style="-fx-font-weight: bold;"/>
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <VBox spacing="5.0" HBox.hgrow="ALWAYS" minWidth="170.0">
+                    <Label text="Boshlanish sanasi" style="-fx-font-size: 11;"/>
+                    <DatePicker fx:id="paymentFromDatePicker" maxWidth="Infinity" prefHeight="35.0"/>
+                </VBox>
+                <VBox spacing="5.0" HBox.hgrow="ALWAYS" minWidth="170.0">
+                    <Label text="Tugash sanasi" style="-fx-font-size: 11;"/>
+                    <DatePicker fx:id="paymentToDatePicker" maxWidth="Infinity" prefHeight="35.0"/>
+                </VBox>
+            </HBox>
+            <VBox spacing="5.0">
+                <Label text="Summa" style="-fx-font-size: 11;"/>
+                <HBox spacing="5.0" alignment="CENTER_LEFT">
+                    <TextField fx:id="paymentAmountField" promptText="0" styleClass="form-control" prefWidth="150.0"/>
+                    <Label text="so'm" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+                </HBox>
+            </VBox>
+            <Button text="To'lovni saqlash" onAction="#onSavePaymentClick" styleClass="btn, btn-success" prefWidth="Infinity">
+                <VBox.margin>
+                    <Insets top="5.0"/>
+                </VBox.margin>
+            </Button>
+        </VBox>
+        
+        <Label text="Oxirgi to'lovlar" style="-fx-font-weight: bold;"/>
+        
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+            <VBox fx:id="paymentsHistoryVBox" spacing="10.0">
+                <!-- Payment Items will be injected here -->
+            </VBox>
+        </ScrollPane>
+    </VBox>
+
+</StackPane>

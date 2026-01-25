@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" 
+           fx:controller="org.algo.mentor.controllers.GroupsController"
+           stylesheets="@../styles/custom.css">
+    
+    <!-- Main Content -->
+    <VBox spacing="20.0" style="-fx-background-color: #f8f9fc;">
+        <padding>
+            <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+        </padding>
+        
+        <HBox alignment="CENTER_LEFT" spacing="20.0">
+            <VBox spacing="5.0">
+                <Label text="Guruhlarni boshqarish" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+                <Label text="Guruhlar ro'yxati va talabalarni taqsimlash" style="-fx-text-fill: #718096; -fx-font-size: 13;"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="+ Yangi guruh" onAction="#onAddGroupClick" styleClass="btn, btn-primary"/>
+        </HBox>
+
+        <!-- Filters -->
+        <HBox spacing="15.0" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 0); -fx-border-color: #edf2f7; -fx-border-radius: 10;">
+            <VBox spacing="5.0" prefWidth="300.0">
+                <Label text="Guruh nomi bo'yicha qidirish" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
+                <TextField fx:id="nameFilterField" promptText="Qidirish..." styleClass="form-control"/>
+            </VBox>
+        </HBox>
+
+        <!-- Groups List -->
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+            <FlowPane fx:id="groupsFlowPane" hgap="20.0" vgap="20.0">
+                <padding>
+                    <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                </padding>
+            </FlowPane>
+        </ScrollPane>
+    </VBox>
+
+    <!-- Overlay for sidebars -->
+    <Pane fx:id="overlayPane" visible="false" onMouseClicked="#closeSidebars" style="-fx-background-color: rgba(0,0,0,0.1);"/>
+
+    <!-- Group Detail Sidebar -->
+    <VBox fx:id="groupSidebar" maxWidth="450.0" prefWidth="450.0" spacing="0.0" 
+          styleClass="sidebar-right" 
+          translateX="450.0" StackPane.alignment="CENTER_RIGHT">
+        
+        <HBox alignment="CENTER_LEFT" style="-fx-padding: 25 25 15 25; -fx-border-color: #f1f5f9; -fx-border-width: 0 0 1 0;">
+            <VBox spacing="10" HBox.hgrow="ALWAYS">
+                <Label text="Guruh nomi:" style="-fx-text-fill: #475569; -fx-font-weight: bold; -fx-font-size: 13;"/>
+                <TextField fx:id="groupNameField" promptText="Guruh nomi..." 
+                           styleClass="form-control"
+                           style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+                <Label text="Guruh ma'lumotlari va talabalar" style="-fx-text-fill: #718096; -fx-font-size: 12;"/>
+            </VBox>
+        </HBox>
+
+        <VBox spacing="20.0" VBox.vgrow="ALWAYS" style="-fx-padding: 25;">
+            <!-- Add Student Section -->
+            <VBox spacing="10.0" style="-fx-background-color: #f8fafc; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: #e2e8f0; -fx-border-radius: 10;">
+                <Label text="Yangi talaba qo'shish" style="-fx-font-weight: bold; -fx-text-fill: #475569;"/>
+                <HBox spacing="10.0">
+                    <TextField fx:id="studentSearchField" promptText="Ism yoki telefon..." HBox.hgrow="ALWAYS" styleClass="form-control"/>
+                    <Button text="Qidirish" onAction="#onSearchStudentClick" styleClass="btn, btn-primary"/>
+                </HBox>
+                
+                <!-- Search Results -->
+                <ListView fx:id="studentSearchResultsList" prefHeight="120.0" visible="false" managed="false"/>
+            </VBox>
+
+            <Label text="Guruhdagi talabalar" style="-fx-font-weight: bold; -fx-text-fill: #475569;"/>
+            
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+                <VBox fx:id="groupStudentsVBox" spacing="10.0" />
+            </ScrollPane>
+        </VBox>
+
+        <HBox spacing="10.0" style="-fx-padding: 20 25 30 25; -fx-border-color: #f1f5f9; -fx-border-width: 1 0 0 0;">
+            <Button fx:id="deleteGroupBtn" text="Guruhni o'chirish" onAction="#onDeleteGroupClick" styleClass="btn" style="-fx-background-color: #fee2e2; -fx-text-fill: #dc2626;"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button fx:id="saveGroupBtn" text="Saqlash" onAction="#onSaveGroupClick" styleClass="btn, btn-primary"/>
+        </HBox>
+    </VBox>
+</StackPane>

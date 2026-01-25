@@ -15,6 +15,8 @@ public class ReportService {
     public record AttendanceDetail(String date, boolean present, double score) {}
     public record LessonStat(String date, double avgScore) {}
     public record SummaryStat(int totalStudents, int totalGroups, int lessonsToday) {}
+    public record UpcomingLesson(int id, String groupName, String time) {}
+    public record RiskStudent(int id, String fullName, double missedRate, double avgScore, String groupName) {}
 
     public static SummaryStat getSummaryStatistics() {
         int students = 0, groups = 0, lessons = 0;
@@ -29,8 +31,8 @@ public class ReportService {
                 if (rs.next()) groups = rs.getInt(1);
             }
             
-            try (PreparedStatement pstmt = conn.prepareStatement("SELECT COUNT(*) FROM lessons WHERE lesson_date LIKE ?")) {
-                pstmt.setString(1, today + "%");
+            try (PreparedStatement pstmt = conn.prepareStatement("SELECT COUNT(*) FROM schedules WHERE day_of_week = ?")) {
+                pstmt.setInt(1, java.time.LocalDate.now().getDayOfWeek().getValue());
                 ResultSet rs = pstmt.executeQuery();
                 if (rs.next()) lessons = rs.getInt(1);
             }
@@ -154,5 +156,66 @@ public class ReportService {
             e.printStackTrace();
         }
         return stats;
+    }
+
+    public static List<UpcomingLesson> getUpcomingLessons() {
+        List<UpcomingLesson> lessons = new ArrayList<>();
+        int dayOfWeek = java.time.LocalDate.now().getDayOfWeek().getValue();
+        // SQLite dayofweek is different if we use strftime, but we have day_of_week as INTEGER (1-7)
+        // In Java Monday=1, Sunday=7. Let's assume our DB also uses 1-7 for Mon-Sun.
+        
+        String query = "SELECT s.id, g.name as group_name, s.lesson_time " +
+                "FROM schedules s " +
+                "JOIN groups g ON s.group_id = g.id " +
+                "WHERE s.day_of_week = ? " +
+                "ORDER BY s.lesson_time ASC";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, dayOfWeek);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    lessons.add(new UpcomingLesson(
+                            rs.getInt("id"),
+                            rs.getString("group_name"),
+                            rs.getString("lesson_time")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return lessons;
+    }
+
+    public static List<RiskStudent> getAtRiskStudents() {
+        List<RiskStudent> students = new ArrayList<>();
+        String query = "SELECT s.id, s.first_name || ' ' || s.last_name as full_name, g.name as group_name, " +
+                "COALESCE((SELECT (1.0 - AVG(CAST(present AS DOUBLE))) * 100 FROM (SELECT a.present FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id ORDER BY l.lesson_date DESC LIMIT 100)), 0) as missed_rate, " +
+                "COALESCE((SELECT AVG(score) FROM (SELECT h.score FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE h.student_id = s.id AND h.score IS NOT NULL ORDER BY l.lesson_date DESC LIMIT 100)), 0) as avg_score " +
+                "FROM students s " +
+                "JOIN student_groups sg ON s.id = sg.student_id " +
+                "JOIN groups g ON sg.group_id = g.id " +
+                "GROUP BY s.id, g.id " +
+                "HAVING missed_rate > 20 OR avg_score < 60 " +
+                "ORDER BY missed_rate DESC, avg_score ASC " +
+                "LIMIT 10";
+
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            while (rs.next()) {
+                students.add(new RiskStudent(
+                        rs.getInt("id"),
+                        rs.getString("full_name"),
+                        rs.getDouble("missed_rate"),
+                        rs.getDouble("avg_score"),
+                        rs.getString("group_name")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return students;
     }
 }

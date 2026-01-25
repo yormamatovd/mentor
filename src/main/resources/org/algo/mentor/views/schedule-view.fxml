@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="org.algo.mentor.controllers.ScheduleController"
+           stylesheets="@../styles/custom.css">
+    
+    <VBox spacing="20.0" style="-fx-background-color: #f8f9fc;">
+        <padding>
+            <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+        </padding>
+        
+        <HBox alignment="CENTER_LEFT" spacing="20.0">
+            <VBox spacing="5.0">
+                <Label text="Dars jadvali (Haftalik takrorlanuvchi)" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+                <Label text="Guruhlar uchun haftalik takrorlanuvchi dars kunlarini belgilash" style="-fx-font-size: 13; -fx-text-fill: #718096;"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <HBox spacing="10.0">
+                <Button text="PDF Eksport" onAction="#onExportPdfClick" styleClass="btn, btn-default"/>
+                <Button text="Dars jadvalini sozlash" onAction="#onAddScheduleClick" styleClass="btn, btn-primary"/>
+            </HBox>
+        </HBox>
+        
+        <HBox spacing="15.0" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 0); -fx-border-color: #edf2f7; -fx-border-radius: 10;">
+            <VBox spacing="5.0">
+                <Label text="Guruh bo'yicha filtr" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
+                <ComboBox fx:id="groupFilterCombo" prefWidth="250.0" styleClass="form-control" promptText="Barcha guruhlar"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="Tozalash" onAction="#onClearFilterClick" styleClass="btn, btn-default"/>
+        </HBox>
+        
+        <VBox VBox.vgrow="ALWAYS" styleClass="card" style="-fx-padding: 0;">
+            <TableView fx:id="scheduleTable" VBox.vgrow="ALWAYS" styleClass="modern-table">
+                <columns>
+                    <TableColumn fx:id="groupNameCol" text="Guruh nomi" prefWidth="250"/>
+                    <TableColumn fx:id="dayOfWeekCol" text="Hafta kuni" prefWidth="150"/>
+                    <TableColumn fx:id="timeCol" text="Vaqt" prefWidth="120"/>
+                    <TableColumn fx:id="nextOccurrenceCol" text="Keyingi dars" prefWidth="180"/>
+                </columns>
+                <placeholder>
+                    <Label text="Dars jadvali mavjud emas"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+    </VBox>
+    
+    <Pane fx:id="overlayPane" visible="false" onMouseClicked="#closeSidebar" style="-fx-background-color: rgba(0,0,0,0.3);"/>
+    
+    <VBox fx:id="scheduleSidebar" maxWidth="400.0" prefWidth="400.0" spacing="20.0" 
+          styleClass="sidebar-right" 
+          translateX="400.0" StackPane.alignment="CENTER_RIGHT">
+        <padding>
+            <Insets bottom="30.0" left="25.0" right="25.0" top="30.0" />
+        </padding>
+        
+        <HBox alignment="CENTER_LEFT" style="-fx-padding: 0 0 10 0; -fx-border-color: #eee; -fx-border-width: 0 0 1 0;">
+            <Label text="Jadvalni tahrirlash" style="-fx-font-size: 20; -fx-font-weight: bold; -fx-text-fill: #2c3e50;"/>
+            <Region HBox.hgrow="ALWAYS" />
+            <Button onAction="#closeSidebar" styleClass="close-button" prefWidth="28" prefHeight="28">
+                <graphic>
+                    <Label text="✕" style="-fx-font-size: 14; -fx-font-weight: bold; -fx-text-fill: #95a5a6;"/>
+                </graphic>
+            </Button>
+        </HBox>
+        
+        <VBox spacing="20.0" VBox.vgrow="ALWAYS">
+            <VBox spacing="8.0">
+                <Label text="Guruhni tanlang" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                <ComboBox fx:id="groupSelectCombo" maxWidth="Infinity" styleClass="form-control" promptText="Guruhni tanlang..."/>
+            </VBox>
+            
+            <VBox fx:id="scheduleContentVBox" spacing="20.0" VBox.vgrow="ALWAYS" disable="true">
+                <VBox spacing="8.0">
+                    <Label text="Hafta kunlarini tanlang" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <HBox spacing="5.0" alignment="CENTER_LEFT">
+                        <ToggleButton fx:id="day1Btn" text="Du" styleClass="day-toggle"/>
+                        <ToggleButton fx:id="day2Btn" text="Se" styleClass="day-toggle"/>
+                        <ToggleButton fx:id="day3Btn" text="Ch" styleClass="day-toggle"/>
+                        <ToggleButton fx:id="day4Btn" text="Pa" styleClass="day-toggle"/>
+                        <ToggleButton fx:id="day5Btn" text="Ju" styleClass="day-toggle"/>
+                        <ToggleButton fx:id="day6Btn" text="Sh" styleClass="day-toggle"/>
+                        <ToggleButton fx:id="day7Btn" text="Ya" styleClass="day-toggle"/>
+                    </HBox>
+                </VBox>
+
+                <VBox spacing="10.0">
+                    <Label text="Vaqtni belgilash usuli" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <HBox spacing="15.0">
+                        <fx:define>
+                            <ToggleGroup fx:id="timeModeGroup"/>
+                        </fx:define>
+                        <RadioButton fx:id="sameTimeRadio" text="Bir xil" toggleGroup="$timeModeGroup" selected="true" style="-fx-font-size: 12;"/>
+                        <RadioButton fx:id="individualTimeRadio" text="Alohida" toggleGroup="$timeModeGroup" style="-fx-font-size: 12;"/>
+                    </HBox>
+                </VBox>
+                
+                <VBox fx:id="sameTimeSection" spacing="8.0">
+                    <Label text="Barcha tanlangan kunlar uchun vaqt" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <ComboBox fx:id="lessonTimeCombo" maxWidth="Infinity" styleClass="form-control" promptText="Vaqtni tanlang..."/>
+                </VBox>
+
+                <VBox fx:id="individualTimeSection" spacing="10.0" visible="false" managed="false" VBox.vgrow="ALWAYS">
+                    <Label text="Kunlar bo'yicha vaqtlar" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+                        <VBox fx:id="individualTimesContainer" spacing="10.0"/>
+                    </ScrollPane>
+                </VBox>
+            </VBox>
+        </VBox>
+        
+        <HBox spacing="10.0">
+            <Button text="Bekor qilish" onAction="#closeSidebar" styleClass="btn, btn-default" prefWidth="Infinity"/>
+            <Button text="Saqlash" onAction="#onSaveScheduleClick" styleClass="btn, btn-primary" prefWidth="Infinity"/>
+        </HBox>
+    </VBox>
+</StackPane>

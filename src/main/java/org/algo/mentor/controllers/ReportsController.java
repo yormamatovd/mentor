@@ -7,10 +7,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.PieChart;
-import javafx.scene.chart.XYChart;
+import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import org.algo.mentor.core.NavigableController;
@@ -69,6 +66,19 @@ public class ReportsController implements NavigableController {
         loadGroupStats();
         loadFilterCombos();
         
+        // Disable chart animations and rotate X-axis labels
+        performanceChart.setAnimated(false);
+        groupComparisonChart.setAnimated(false);
+        groupDistributionChart.setAnimated(false);
+        individualAttendancePie.setAnimated(false);
+
+        if (performanceChart.getXAxis() instanceof CategoryAxis xAxis) {
+            xAxis.setTickLabelRotation(-45);
+        }
+        if (groupComparisonChart.getXAxis() instanceof CategoryAxis xAxis) {
+            xAxis.setTickLabelRotation(-45);
+        }
+
         groupFilterCombo.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
             if (val != null) loadStudentStats(val.getId());
         });
@@ -131,7 +141,14 @@ public class ReportsController implements NavigableController {
     }
 
     private void setupIndividualStatsTable() {
-        attDateCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().date()));
+        attDateCol.setCellValueFactory(cd -> {
+            String date = cd.getValue().date();
+            if (date != null && date.length() >= 10) {
+                // yyyy-MM-dd -> dd.MM
+                return new ReadOnlyObjectWrapper<>(date.substring(8, 10) + "." + date.substring(5, 7));
+            }
+            return new ReadOnlyObjectWrapper<>(date);
+        });
         attStatusCol.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().present() ? "Kelgan" : "Kelmagan"));
         attScoreCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().score()));
         
@@ -272,7 +289,8 @@ public class ReportsController implements NavigableController {
 
             for (int i = limit - 1; i >= 0; i--) {
                 ReportService.AttendanceDetail d = details.get(i);
-                String dateLabel = d.date().substring(5, 10);
+                // Format date as dd.MM (from yyyy-MM-dd)
+                String dateLabel = d.date().substring(8, 10) + "." + d.date().substring(5, 7);
                 studentSeries.getData().add(new XYChart.Data<>(dateLabel, d.score()));
                 
                 // Find group average for this date

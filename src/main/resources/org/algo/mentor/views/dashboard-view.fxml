@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.HBox?>
+
+<ScrollPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.algo.mentor.controllers.DashboardController" fitToWidth="true"
+            style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+    <VBox fx:id="contentVBox" style="-fx-padding: 40; -fx-spacing: 25;" prefWidth="1000.0">
+        <HBox alignment="CENTER_LEFT" spacing="20.0">
+            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                <Label text="Asosiy boshqaruv paneli" style="-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+                <Label text="Tizimdagi umumiy holat va so'nggi ma'lumotlar" style="-fx-font-size: 14; -fx-text-fill: #718096;"/>
+            </VBox>
+            <VBox alignment="CENTER_RIGHT" style="-fx-background-color: #ebf8ff; -fx-padding: 15 25; -fx-background-radius: 12; -fx-border-color: #bee3f8; -fx-border-radius: 12;">
+                <Label fx:id="timeLabel" text="00:00:00" style="-fx-font-size: 24; -fx-font-family: 'Monospaced'; -fx-font-weight: bold; -fx-text-fill: #2b6cb0;"/>
+                <Label fx:id="dateLabel" text="25-yanvar, 2026" style="-fx-font-size: 13; -fx-text-fill: #4299e1;"/>
+            </VBox>
+        </HBox>
+        
+        <HBox spacing="20.0">
+            <VBox prefWidth="250.0" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 0); -fx-border-color: #edf2f7; -fx-border-radius: 12;">
+                <Label text="O'quvchilar" style="-fx-text-fill: #718096; -fx-font-size: 14;"/>
+                <Label fx:id="studentCountLabel" text="--" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+            </VBox>
+            <VBox prefWidth="250.0" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 0); -fx-border-color: #edf2f7; -fx-border-radius: 12;">
+                <Label text="Guruhlar" style="-fx-text-fill: #718096; -fx-font-size: 14;"/>
+                <Label fx:id="groupCountLabel" text="--" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+            </VBox>
+            <VBox prefWidth="250.0" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 0); -fx-border-color: #edf2f7; -fx-border-radius: 12;">
+                <Label text="Bugungi darslar" style="-fx-text-fill: #718096; -fx-font-size: 14;"/>
+                <Label fx:id="lessonCountLabel" text="--" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+            </VBox>
+        </HBox>
+
+        <HBox spacing="25.0" VBox.vgrow="ALWAYS">
+            <VBox spacing="15.0" HBox.hgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 12; -fx-border-color: #edf2f7;">
+                <Label text="Bugungi darslar jadvali" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+                <VBox fx:id="upcomingLessonsVBox" spacing="10.0"/>
+            </VBox>
+            
+            <VBox spacing="15.0" prefWidth="350.0" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 12; -fx-border-color: #edf2f7;">
+                <Label text="Faol bo'lmagan o'quvchilar" style="-fx-font-size: 18; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+                <VBox fx:id="riskListVBox" spacing="10.0"/>
+            </VBox>
+        </HBox>
+    </VBox>
+</ScrollPane>

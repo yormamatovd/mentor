@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="org.algo.mentor.controllers.MainController" fx:id="mainLayout"
+            style="-fx-background-color: #f8f9fc;">
+    <top>
+        <HBox fx:id="headerHBox" prefHeight="65.0" style="-fx-background-color: white; -fx-border-color: #edf2f7; -fx-border-width: 0 0 1 0;"/>
+    </top>
+    <left>
+        <VBox fx:id="sidebarVBox" prefWidth="240.0" style="-fx-background-color: white; -fx-border-color: #edf2f7; -fx-border-width: 0 1 0 0;"/>
+    </left>
+    <center>
+        <StackPane fx:id="contentArea" style="-fx-background-color: transparent;"/>
+    </center>
+</BorderPane>

@@ -29,6 +29,7 @@ mentor/
 │           └── org/algo/mentor/
 │               ├── styles/             # CSS stylesheets
 │               └── views/              # FXML layout files
+├── core/                               # (Redundant) Placeholder directory
 ├── mentor.db                           # SQLite Database file
 ├── pom.xml                             # Maven Project Object Model
 ├── mvnw                                # Maven Wrapper (Unix)
@@ -59,6 +60,7 @@ Located in `src/main/java/org/algo/mentor/controllers/`:
 - **StudentsController**: Manages student records (CRUD).
 - **GroupsController**: Manages student groups and assignments.
 - **LessonsController**: Tracks lesson attendance and scheduling.
+- **ReportsController**: Generates and displays various performance and attendance reports.
 
 ## Services & Models
 The application follows a layered architecture:
@@ -69,7 +71,7 @@ Located in `src/main/java/org/algo/mentor/models/`:
 
 ### Services
 Located in `src/main/java/org/algo/mentor/services/`:
-- `StudentService`, `GroupService`, `LessonService`, `PaymentService`, `AuthService`.
+- `StudentService`, `GroupService`, `LessonService`, `PaymentService`, `AuthService`, `ReportService`.
 
 ## Technologies & Dependencies
 

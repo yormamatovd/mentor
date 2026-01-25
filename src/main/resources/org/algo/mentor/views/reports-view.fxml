@@ -60,8 +60,8 @@
                     
                     <VBox styleClass="card" spacing="10">
                         <Label text="Guruhlar o'rtacha ko'rsatkichlari" styleClass="card-title" style="-fx-font-size: 16;"/>
-                        <BarChart fx:id="groupComparisonChart" prefHeight="300">
-                            <xAxis><CategoryAxis label="Guruhlar"/></xAxis>
+                        <BarChart fx:id="groupComparisonChart" prefHeight="300" animated="false">
+                            <xAxis><CategoryAxis fx:id="groupComparisonXAxis" label="Guruhlar"/></xAxis>
                             <yAxis><NumberAxis label="Ko'rsatkich" lowerBound="0" upperBound="100" tickUnit="20"/></yAxis>
                         </BarChart>
                     </VBox>
@@ -71,32 +71,35 @@
 
         <!-- O'quvchilar bo'yicha faollik -->
         <Tab text="O'quvchilar faolligi">
-            <VBox spacing="15" style="-fx-padding: 20;">
-                <HBox spacing="15" alignment="CENTER_LEFT">
-                    <Label text="Guruhni tanlang:"/>
-                    <ComboBox fx:id="groupFilterCombo" promptText="Guruh tanlang..." prefWidth="200"/>
-                </HBox>
-                <TableView fx:id="studentStatsTable" VBox.vgrow="ALWAYS" styleClass="modern-table">
-                    <columns>
-                        <TableColumn fx:id="studentRankCol" text="Reyting" prefWidth="80"/>
-                        <TableColumn fx:id="studentNameCol" text="F.I.SH" prefWidth="250"/>
-                        <TableColumn fx:id="studentAttRateCol" text="Davomat (%)" prefWidth="120"/>
-                        <TableColumn fx:id="studentMissedCol" text="Qoldirilgan" prefWidth="100"/>
-                        <TableColumn fx:id="studentAvgScoreCol" text="O'rtacha ball" prefWidth="120"/>
-                    </columns>
-                </TableView>
-            </VBox>
+            <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: #f8f9fc;">
+                <VBox spacing="15" style="-fx-padding: 20;">
+                    <HBox spacing="15" alignment="CENTER_LEFT">
+                        <Label text="Guruhni tanlang:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
+                        <ComboBox fx:id="groupFilterCombo" promptText="Guruh tanlang..." prefWidth="250" styleClass="form-control"/>
+                    </HBox>
+                    <TableView fx:id="studentStatsTable" prefHeight="600" styleClass="modern-table">
+                        <columns>
+                            <TableColumn fx:id="studentRankCol" text="Reyting" prefWidth="80"/>
+                            <TableColumn fx:id="studentNameCol" text="F.I.SH" prefWidth="250"/>
+                            <TableColumn fx:id="studentAttRateCol" text="Davomat (%)" prefWidth="120"/>
+                            <TableColumn fx:id="studentMissedCol" text="Qoldirilgan" prefWidth="100"/>
+                            <TableColumn fx:id="studentAvgScoreCol" text="O'rtacha ball" prefWidth="120"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </ScrollPane>
         </Tab>
 
         <!-- Shaxsiy statistika -->
         <Tab text="Shaxsiy statistika">
-            <VBox spacing="20" style="-fx-padding: 20;">
-                <HBox spacing="15" alignment="CENTER_LEFT">
-                    <Label text="O'quvchini tanlang:"/>
-                    <ComboBox fx:id="studentFilterCombo" promptText="O'quvchi tanlang..." prefWidth="250"/>
-                </HBox>
-                
-                <GridPane hgap="20" vgap="20">
+            <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: #f8f9fc;">
+                <VBox spacing="20" style="-fx-padding: 20;">
+                    <HBox spacing="15" alignment="CENTER_LEFT">
+                        <Label text="O'quvchini tanlang:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
+                        <ComboBox fx:id="studentFilterCombo" promptText="O'quvchi tanlang..." prefWidth="300" styleClass="form-control"/>
+                    </HBox>
+                    
+                    <GridPane hgap="20" vgap="20">
                     <columnConstraints>
                         <ColumnConstraints percentWidth="33"/>
                         <ColumnConstraints percentWidth="33"/>
@@ -141,7 +144,7 @@
                         
                         <VBox styleClass="card" VBox.vgrow="ALWAYS" spacing="10">
                             <Label text="O'zlashtirish grafigi" styleClass="card-title" style="-fx-font-size: 16;"/>
-                            <LineChart fx:id="performanceChart" createSymbols="true" legendVisible="true">
+                            <LineChart fx:id="performanceChart" createSymbols="true" legendVisible="true" animated="false">
                                 <xAxis><CategoryAxis label="Sana"/></xAxis>
                                 <yAxis><NumberAxis label="Ball" lowerBound="0" upperBound="100" tickUnit="10"/></yAxis>
                             </LineChart>
@@ -149,6 +152,7 @@
                     </VBox>
                 </HBox>
             </VBox>
+            </ScrollPane>
         </Tab>
     </TabPane>
 </VBox>
