@@ -12,11 +12,19 @@ public class ReportService {
 
     public record GroupStat(int id, String name, int studentCount, double avgAttendance, double avgScore) {}
     public record StudentStat(int id, String fullName, double attendanceRate, double avgScore, int rank, int missedLessons) {}
-    public record AttendanceDetail(String date, boolean present, double score) {}
+    public record AttendanceDetail(String date, boolean present, double score, String scoreBreakdown) {}
     public record LessonStat(String date, double avgScore) {}
     public record SummaryStat(int totalStudents, int totalGroups, int lessonsToday) {}
     public record UpcomingLesson(int id, String groupName, String time) {}
     public record RiskStudent(int id, String fullName, double missedRate, double avgScore, String groupName) {}
+    
+    public record TestScore(String topic, double score) {}
+    public record HomeworkScore(double score) {}
+    public record QuestionScore(String topic, double score) {}
+    public record DetailedLessonScore(String date, boolean present, 
+            List<TestScore> tests, List<HomeworkScore> homeworks, List<QuestionScore> questions, double totalScore) {}
+    
+    public record LessonScoreRow(String date, String status, String scoreType, String topic, Double score) {}
 
     public static SummaryStat getSummaryStatistics() {
         int students = 0, groups = 0, lessons = 0;
@@ -106,7 +114,14 @@ public class ReportService {
 
     public static List<AttendanceDetail> getIndividualStudentAttendance(int studentId, int groupId) {
         List<AttendanceDetail> details = new ArrayList<>();
-        String query = "SELECT l.lesson_date, a.present, COALESCE(h.score, 0) as score " +
+        String query = "SELECT l.lesson_date, a.present, " +
+                "COALESCE(h.score, 0) as hw_score, " +
+                "(SELECT GROUP_CONCAT(COALESCE(qs.topic, 'Savol') || ': ' || qr.total_score, '; ') " +
+                " FROM question_sessions qs JOIN question_results qr ON qs.id = qr.question_session_id " +
+                " WHERE qs.lesson_id = l.id AND qr.student_id = a.student_id) as qs_info, " +
+                "(SELECT GROUP_CONCAT(COALESCE(ts.topic, 'Test') || ': ' || tr.total_score, '; ') " +
+                " FROM test_sessions ts JOIN test_results tr ON ts.id = tr.test_session_id " +
+                " WHERE ts.lesson_id = l.id AND tr.student_id = a.student_id) as ts_info " +
                 "FROM lessons l " +
                 "JOIN attendance a ON l.id = a.lesson_id " +
                 "LEFT JOIN homeworks h ON l.id = h.lesson_id AND h.student_id = a.student_id " +
@@ -119,10 +134,40 @@ public class ReportService {
             pstmt.setInt(2, groupId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
+                    double hwScore = rs.getDouble("hw_score");
+                    String qsInfo = rs.getString("qs_info");
+                    String tsInfo = rs.getString("ts_info");
+                    
+                    StringBuilder breakdown = new StringBuilder();
+                    double totalScore = hwScore;
+                    
+                    breakdown.append("Uy vazifa: ").append(hwScore);
+                    
+                    if (qsInfo != null && !qsInfo.isEmpty()) {
+                        breakdown.append(", ").append(qsInfo);
+                        // Extract scores to add to total
+                        for (String s : qsInfo.split("; ")) {
+                            try {
+                                totalScore += Double.parseDouble(s.substring(s.lastIndexOf(":") + 1).trim());
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                    
+                    if (tsInfo != null && !tsInfo.isEmpty()) {
+                        breakdown.append(", ").append(tsInfo);
+                        // Extract scores to add to total
+                        for (String s : tsInfo.split("; ")) {
+                            try {
+                                totalScore += Double.parseDouble(s.substring(s.lastIndexOf(":") + 1).trim());
+                            } catch (Exception ignored) {}
+                        }
+                    }
+
                     details.add(new AttendanceDetail(
                             rs.getString("lesson_date"),
                             rs.getInt("present") == 1,
-                            rs.getDouble("score")
+                            totalScore,
+                            breakdown.toString()
                     ));
                 }
             }
@@ -217,5 +262,145 @@ public class ReportService {
             e.printStackTrace();
         }
         return students;
+    }
+
+    public static List<DetailedLessonScore> getDetailedLessonScores(int studentId, int groupId) {
+        List<DetailedLessonScore> details = new ArrayList<>();
+        
+        record LessonBasic(int id, String date, boolean present) {}
+        List<LessonBasic> lessonBasics = new ArrayList<>();
+        
+        String query = "SELECT l.id, l.lesson_date, a.present " +
+                "FROM lessons l " +
+                "JOIN attendance a ON l.id = a.lesson_id " +
+                "WHERE a.student_id = ? AND l.group_id = ? " +
+                "ORDER BY l.lesson_date DESC";
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, studentId);
+            pstmt.setInt(2, groupId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    lessonBasics.add(new LessonBasic(
+                            rs.getInt("id"),
+                            rs.getString("lesson_date"),
+                            rs.getInt("present") == 1
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        for (LessonBasic lesson : lessonBasics) {
+            List<TestScore> tests = getTestScores(lesson.id, studentId);
+            List<HomeworkScore> homeworks = getHomeworkScores(lesson.id, studentId);
+            List<QuestionScore> questions = getQuestionScores(lesson.id, studentId);
+            
+            double totalScore = 0;
+            for (TestScore t : tests) totalScore += t.score();
+            for (HomeworkScore h : homeworks) totalScore += h.score();
+            for (QuestionScore q : questions) totalScore += q.score();
+            
+            details.add(new DetailedLessonScore(lesson.date, lesson.present, tests, homeworks, questions, totalScore));
+        }
+        
+        return details;
+    }
+    
+    public static List<LessonScoreRow> getLessonScoreRows(int studentId, int groupId) {
+        List<LessonScoreRow> rows = new ArrayList<>();
+        List<DetailedLessonScore> details = getDetailedLessonScores(studentId, groupId);
+        
+        for (DetailedLessonScore detail : details) {
+            String dateStr = detail.date();
+            String statusStr = detail.present() ? "Kelgan" : "Kelmagan";
+            
+            if (detail.tests().isEmpty() && detail.homeworks().isEmpty() && detail.questions().isEmpty()) {
+                rows.add(new LessonScoreRow(dateStr, statusStr, "-", "-", 0.0));
+            } else {
+                for (TestScore test : detail.tests()) {
+                    rows.add(new LessonScoreRow(dateStr, statusStr, "Test", test.topic(), test.score()));
+                }
+                
+                for (HomeworkScore hw : detail.homeworks()) {
+                    rows.add(new LessonScoreRow(dateStr, statusStr, "Uy vazifa", "-", hw.score()));
+                }
+                
+                for (QuestionScore q : detail.questions()) {
+                    rows.add(new LessonScoreRow(dateStr, statusStr, "Savol", q.topic(), q.score()));
+                }
+            }
+        }
+        
+        return rows;
+    }
+    
+    private static List<TestScore> getTestScores(int lessonId, int studentId) {
+        List<TestScore> scores = new ArrayList<>();
+        String query = "SELECT ts.topic, tr.total_score " +
+                "FROM test_sessions ts " +
+                "JOIN test_results tr ON ts.id = tr.test_session_id " +
+                "WHERE ts.lesson_id = ? AND tr.student_id = ?";
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, lessonId);
+            pstmt.setInt(2, studentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String topic = rs.getString("topic");
+                    if (topic == null || topic.isEmpty()) topic = "Test";
+                    scores.add(new TestScore(topic, rs.getDouble("total_score")));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return scores;
+    }
+    
+    private static List<HomeworkScore> getHomeworkScores(int lessonId, int studentId) {
+        List<HomeworkScore> scores = new ArrayList<>();
+        String query = "SELECT score FROM homeworks WHERE lesson_id = ? AND student_id = ?";
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, lessonId);
+            pstmt.setInt(2, studentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    scores.add(new HomeworkScore(rs.getDouble("score")));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return scores;
+    }
+    
+    private static List<QuestionScore> getQuestionScores(int lessonId, int studentId) {
+        List<QuestionScore> scores = new ArrayList<>();
+        String query = "SELECT qs.topic, qr.total_score " +
+                "FROM question_sessions qs " +
+                "JOIN question_results qr ON qs.id = qr.question_session_id " +
+                "WHERE qs.lesson_id = ? AND qr.student_id = ?";
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, lessonId);
+            pstmt.setInt(2, studentId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String topic = rs.getString("topic");
+                    if (topic == null || topic.isEmpty()) topic = "Savol";
+                    scores.add(new QuestionScore(topic, rs.getDouble("total_score")));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return scores;
     }
 }

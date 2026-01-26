@@ -10,14 +10,21 @@ import javafx.fxml.FXML;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.WritableImage;
+import javafx.scene.SnapshotParameters;
+import javafx.stage.FileChooser;
 import org.algo.mentor.core.NavigableController;
 import org.algo.mentor.core.NavigationController;
 import org.algo.mentor.models.Group;
 import org.algo.mentor.models.Student;
 import org.algo.mentor.services.GroupService;
+import org.algo.mentor.services.PdfExportService;
 import org.algo.mentor.services.ReportService;
 import org.algo.mentor.services.StudentService;
 
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,12 +54,16 @@ public class ReportsController implements NavigableController {
     @FXML private Label individualRankLabel;
     @FXML private Label individualAvgScoreLabel;
     @FXML private Label individualAttRateLabel;
-    @FXML private TableView<ReportService.AttendanceDetail> individualAttTable;
-    @FXML private TableColumn<ReportService.AttendanceDetail, String> attDateCol;
-    @FXML private TableColumn<ReportService.AttendanceDetail, String> attStatusCol;
-    @FXML private TableColumn<ReportService.AttendanceDetail, Double> attScoreCol;
+    @FXML private TableView<ReportService.LessonScoreRow> individualAttTable;
+    @FXML private TableColumn<ReportService.LessonScoreRow, String> attDateCol;
+    @FXML private TableColumn<ReportService.LessonScoreRow, String> attStatusCol;
+    @FXML private TableColumn<ReportService.LessonScoreRow, String> scoreTypeCol;
+    @FXML private TableColumn<ReportService.LessonScoreRow, String> scoreTopicCol;
+    @FXML private TableColumn<ReportService.LessonScoreRow, Double> attScoreCol;
     @FXML private PieChart individualAttendancePie;
     @FXML private LineChart<String, Number> performanceChart;
+    @FXML private Button exportPersonalPdfBtn;
+    @FXML private Label personalExportStatusLabel;
 
     private NavigationController navigationController;
 
@@ -84,8 +95,31 @@ public class ReportsController implements NavigableController {
         });
         
         studentFilterCombo.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
-            if (val != null) loadIndividualStats(val.getId());
+            if (val != null) {
+                loadIndividualStats(val.getId());
+                exportPersonalPdfBtn.setDisable(false);
+            } else {
+                exportPersonalPdfBtn.setDisable(true);
+            }
+            clearStatus();
         });
+    }
+
+    private void clearStatus() {
+        personalExportStatusLabel.setVisible(false);
+        personalExportStatusLabel.setManaged(false);
+        personalExportStatusLabel.setText("");
+    }
+
+    private void showStatus(String message, boolean isError) {
+        personalExportStatusLabel.setText(message);
+        personalExportStatusLabel.setVisible(true);
+        personalExportStatusLabel.setManaged(true);
+        if (isError) {
+            personalExportStatusLabel.setStyle("-fx-background-color: #fff5f5; -fx-text-fill: #c53030; -fx-border-color: #feb2b2; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 8;");
+        } else {
+            personalExportStatusLabel.setStyle("-fx-background-color: #f0fff4; -fx-text-fill: #2f855a; -fx-border-color: #9ae6b4; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 8;");
+        }
     }
 
     private void loadSummary() {
@@ -144,12 +178,14 @@ public class ReportsController implements NavigableController {
         attDateCol.setCellValueFactory(cd -> {
             String date = cd.getValue().date();
             if (date != null && date.length() >= 10) {
-                // yyyy-MM-dd -> dd.MM
                 return new ReadOnlyObjectWrapper<>(date.substring(8, 10) + "." + date.substring(5, 7));
             }
             return new ReadOnlyObjectWrapper<>(date);
         });
-        attStatusCol.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().present() ? "Kelgan" : "Kelmagan"));
+        
+        attStatusCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().status()));
+        scoreTypeCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().scoreType()));
+        scoreTopicCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().topic()));
         attScoreCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().score()));
         
         attStatusCol.setCellFactory(tc -> new TableCell<>() {
@@ -163,6 +199,13 @@ public class ReportsController implements NavigableController {
                     if (item.equals("Kelgan")) setStyle("-fx-text-fill: #38a169; -fx-font-weight: bold;");
                     else setStyle("-fx-text-fill: #e53e3e; -fx-font-weight: bold;");
                 }
+            }
+        });
+        
+        attScoreCol.setCellFactory(tc -> new TableCell<>() {
+            @Override protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : String.format("%.1f", item));
             }
         });
     }
@@ -247,12 +290,37 @@ public class ReportsController implements NavigableController {
         }
 
         if (groupId != -1) {
-            List<ReportService.AttendanceDetail> details = ReportService.getIndividualStudentAttendance(studentId, groupId);
-            individualAttTable.setItems(FXCollections.observableArrayList(details));
+            List<ReportService.DetailedLessonScore> allDetails = ReportService.getDetailedLessonScores(studentId, groupId);
+            
+            // Filter last 1 year
+            LocalDate oneYearAgo = LocalDate.now().minusYears(1);
+            List<ReportService.DetailedLessonScore> details = allDetails.stream()
+                    .filter(d -> {
+                        try {
+                            return LocalDate.parse(d.date()).isAfter(oneYearAgo);
+                        } catch (Exception e) {
+                            return true;
+                        }
+                    })
+                    .collect(Collectors.toList());
+
+            // Get rows for table display
+            List<ReportService.LessonScoreRow> allRows = ReportService.getLessonScoreRows(studentId, groupId);
+            List<ReportService.LessonScoreRow> rows = allRows.stream()
+                    .filter(r -> {
+                        try {
+                            return LocalDate.parse(r.date()).isAfter(oneYearAgo);
+                        } catch (Exception e) {
+                            return true;
+                        }
+                    })
+                    .collect(Collectors.toList());
+            
+            individualAttTable.setItems(FXCollections.observableArrayList(rows));
             
             // Calculate summaries
-            double avgScore = details.stream().mapToDouble(ReportService.AttendanceDetail::score).average().orElse(0.0);
-            long presentCount = details.stream().filter(ReportService.AttendanceDetail::present).count();
+            double avgScore = details.stream().mapToDouble(ReportService.DetailedLessonScore::totalScore).average().orElse(0.0);
+            long presentCount = details.stream().filter(ReportService.DetailedLessonScore::present).count();
             double attRate = details.isEmpty() ? 0 : (double) presentCount / details.size() * 100;
             
             individualAvgScoreLabel.setText(String.format("%.1f", avgScore));
@@ -260,8 +328,9 @@ public class ReportsController implements NavigableController {
             
             // Attendance Pie Chart
             individualAttendancePie.getData().clear();
-            individualAttendancePie.getData().add(new PieChart.Data("Kelgan", presentCount));
-            individualAttendancePie.getData().add(new PieChart.Data("Kelmagan", details.size() - presentCount));
+            long absentCount = details.size() - presentCount;
+            individualAttendancePie.getData().add(new PieChart.Data("Kelgan (" + presentCount + ")", presentCount));
+            individualAttendancePie.getData().add(new PieChart.Data("Kelmagan (" + absentCount + ")", absentCount));
             
             // Rank
             List<ReportService.StudentStat> studentStats = ReportService.getStudentStatistics(groupId);
@@ -288,10 +357,10 @@ public class ReportsController implements NavigableController {
             List<ReportService.LessonStat> groupLessonStats = ReportService.getGroupLessonStatistics(groupId);
 
             for (int i = limit - 1; i >= 0; i--) {
-                ReportService.AttendanceDetail d = details.get(i);
+                ReportService.DetailedLessonScore d = details.get(i);
                 // Format date as dd.MM (from yyyy-MM-dd)
                 String dateLabel = d.date().substring(8, 10) + "." + d.date().substring(5, 7);
-                studentSeries.getData().add(new XYChart.Data<>(dateLabel, d.score()));
+                studentSeries.getData().add(new XYChart.Data<>(dateLabel, d.totalScore()));
                 
                 // Find group average for this date
                 double groupAvg = groupLessonStats.stream()
@@ -303,6 +372,45 @@ public class ReportsController implements NavigableController {
             }
             
             performanceChart.getData().addAll(studentSeries, groupSeries);
+        }
+    }
+
+    @FXML
+    private void onExportPersonalPdfClick() {
+        Student student = studentFilterCombo.getValue();
+        if (student == null) return;
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Talaba hisobotini saqlash");
+        fileChooser.setInitialFileName(student.getFirstName() + "_" + student.getLastName() + "_hisobot.pdf");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+
+        File file = fileChooser.showSaveDialog(exportPersonalPdfBtn.getScene().getWindow());
+        if (file != null) {
+            try {
+                // High-quality snapshots of charts
+                SnapshotParameters params = new SnapshotParameters();
+                params.setTransform(javafx.scene.transform.Transform.scale(2.0, 2.0));
+                
+                WritableImage attImage = individualAttendancePie.snapshot(params, null);
+                WritableImage perfImage = performanceChart.snapshot(params, null);
+
+                PdfExportService.exportStudentReport(
+                        student,
+                        individualAttTable.getItems(),
+                        individualRankLabel.getText(),
+                        individualAvgScoreLabel.getText(),
+                        individualAttRateLabel.getText(),
+                        attImage,
+                        perfImage,
+                        file
+                );
+
+                showStatus("Talaba hisoboti PDF formatida saqlandi.", false);
+            } catch (IOException e) {
+                e.printStackTrace();
+                showStatus("PDF eksport qilishda xatolik: " + e.getMessage(), true);
+            }
         }
     }
 

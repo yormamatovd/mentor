@@ -27,10 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 public class ScheduleController implements NavigableController {
 
@@ -43,6 +41,11 @@ public class ScheduleController implements NavigableController {
 
     @FXML private Pane overlayPane;
     @FXML private VBox scheduleSidebar;
+    @FXML private VBox exportSidebar;
+    @FXML private DatePicker exportStartDatePicker;
+    @FXML private DatePicker exportEndDatePicker;
+    @FXML private Label exportGroupsLabel;
+    @FXML private Label exportStatusLabel;
     @FXML private ComboBox<Group> groupSelectCombo;
     @FXML private ToggleButton day1Btn, day2Btn, day3Btn, day4Btn, day5Btn, day6Btn, day7Btn;
     @FXML private ComboBox<String> lessonTimeCombo;
@@ -68,6 +71,41 @@ public class ScheduleController implements NavigableController {
         setupSidebarCombos();
         setupModeListeners();
         setupDayListeners();
+        setupExportDatePickerRestrictions();
+    }
+
+    private void setupExportDatePickerRestrictions() {
+        // Start date restriction based on end date
+        exportStartDatePicker.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                LocalDate end = exportEndDatePicker.getValue();
+                if (end != null) {
+                    setDisable(empty || date.isAfter(end) || date.isBefore(end.minusMonths(2)));
+                }
+            }
+        });
+
+        // End date restriction based on start date
+        exportEndDatePicker.setDayCellFactory(picker -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                LocalDate start = exportStartDatePicker.getValue();
+                if (start != null) {
+                    setDisable(empty || date.isBefore(start) || date.isAfter(start.plusMonths(2)));
+                }
+            }
+        });
+
+        // Add listeners to refresh cell factories when values change
+        exportStartDatePicker.valueProperty().addListener((obs, old, val) -> {
+            // No need to manually refresh end date picker, it will happen on next interaction
+            // but we can force it if needed.
+        });
+        exportEndDatePicker.valueProperty().addListener((obs, old, val) -> {
+        });
     }
 
     private void setupModeListeners() {
@@ -200,6 +238,82 @@ public class ScheduleController implements NavigableController {
 
     @FXML
     private void onExportPdfClick() {
+        Group selectedGroup = groupFilterCombo.getValue();
+        if (selectedGroup != null) {
+            exportGroupsLabel.setText("Guruh: " + selectedGroup.getName());
+        } else {
+            exportGroupsLabel.setText("Barcha guruhlar");
+        }
+
+        // Default dates: current month
+        LocalDate now = LocalDate.now();
+        exportStartDatePicker.setValue(now.withDayOfMonth(1));
+        exportEndDatePicker.setValue(now.withDayOfMonth(now.lengthOfMonth()));
+        
+        clearStatus();
+
+        openExportSidebar();
+    }
+
+    private void clearStatus() {
+        exportStatusLabel.setVisible(false);
+        exportStatusLabel.setManaged(false);
+        exportStatusLabel.setText("");
+    }
+
+    private void showStatus(String message, boolean isError) {
+        exportStatusLabel.setText(message);
+        exportStatusLabel.setVisible(true);
+        exportStatusLabel.setManaged(true);
+        if (isError) {
+            exportStatusLabel.setStyle("-fx-background-color: #fff5f5; -fx-text-fill: #c53030; -fx-border-color: #feb2b2; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10;");
+        } else {
+            exportStatusLabel.setStyle("-fx-background-color: #f0fff4; -fx-text-fill: #2f855a; -fx-border-color: #9ae6b4; -fx-border-radius: 5; -fx-background-radius: 5; -fx-padding: 10;");
+        }
+    }
+
+    private void openExportSidebar() {
+        overlayPane.setVisible(true);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(300), exportSidebar);
+        tt.setToX(0);
+        tt.play();
+    }
+
+    @FXML
+    private void closeExportSidebar() {
+        TranslateTransition tt = new TranslateTransition(Duration.millis(300), exportSidebar);
+        tt.setToX(400);
+        tt.setOnFinished(e -> {
+            if (scheduleSidebar.getTranslateX() != 0) {
+                overlayPane.setVisible(false);
+            }
+        });
+        tt.play();
+    }
+
+    @FXML
+    private void onPerformExportClick() {
+        LocalDate start = exportStartDatePicker.getValue();
+        LocalDate end = exportEndDatePicker.getValue();
+
+        if (start == null || end == null) {
+            showStatus("Sanalarni tanlang", true);
+            return;
+        }
+
+        if (end.isBefore(start)) {
+            showStatus("Tugash sanasi boshlanish sanasidan oldin bo'lishi mumkin emas", true);
+            return;
+        }
+
+        long months = ChronoUnit.MONTHS.between(start.withDayOfMonth(1), end.withDayOfMonth(1));
+        if (months >= 2) {
+             if (start.plusMonths(2).isBefore(end)) {
+                 showStatus("Vaqt oralig'i 2 oydan ko'p bo'lishi mumkin emas", true);
+                 return;
+             }
+        }
+
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("PDF ni saqlash");
         fileChooser.setInitialFileName("dars_jadvali.pdf");
@@ -208,22 +322,27 @@ public class ScheduleController implements NavigableController {
         File file = fileChooser.showSaveDialog(scheduleTable.getScene().getWindow());
         if (file != null) {
             try {
-                PdfExportService.exportSchedule(scheduleTable.getItems(), file);
-                
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Muvaffaqiyatli");
-                alert.setHeaderText(null);
-                alert.setContentText("Dars jadvali PDF formatida saqlandi.");
-                alert.showAndWait();
+                PdfExportService.exportCalendarSchedule(scheduleTable.getItems(), start, end, file);
+                showStatus("Dars jadvali PDF formatida saqlandi.", false);
             } catch (IOException e) {
                 e.printStackTrace();
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Xatolik");
-                alert.setHeaderText("PDF eksport qilishda xatolik");
-                alert.setContentText(e.getMessage());
-                alert.showAndWait();
+                showStatus("PDF eksport qilishda xatolik: " + e.getMessage(), true);
             }
         }
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
+
+    @FXML
+    private void onOverlayClick() {
+        if (scheduleSidebar.getTranslateX() == 0) closeSidebar();
+        if (exportSidebar.getTranslateX() == 0) closeExportSidebar();
     }
 
     @FXML

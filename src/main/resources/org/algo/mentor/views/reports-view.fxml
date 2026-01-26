@@ -97,6 +97,9 @@
                     <HBox spacing="15" alignment="CENTER_LEFT">
                         <Label text="O'quvchini tanlang:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
                         <ComboBox fx:id="studentFilterCombo" promptText="O'quvchi tanlang..." prefWidth="300" styleClass="form-control"/>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="personalExportStatusLabel" visible="false" managed="false" style="-fx-font-size: 12; -fx-padding: 8; -fx-background-radius: 5;"/>
+                        <Button fx:id="exportPersonalPdfBtn" text="Eksport PDF" onAction="#onExportPersonalPdfClick" disable="true" styleClass="btn, btn-primary"/>
                     </HBox>
                     
                     <GridPane hgap="20" vgap="20">
@@ -128,8 +131,10 @@
                             <Label text="Darslar bo'yicha batafsil" styleClass="card-title" style="-fx-font-size: 16;"/>
                             <TableView fx:id="individualAttTable" VBox.vgrow="ALWAYS" styleClass="modern-table">
                                 <columns>
-                                    <TableColumn fx:id="attDateCol" text="Sana" prefWidth="150"/>
+                                    <TableColumn fx:id="attDateCol" text="Sana" prefWidth="120"/>
                                     <TableColumn fx:id="attStatusCol" text="Holati" prefWidth="100"/>
+                                    <TableColumn fx:id="scoreTypeCol" text="Ball turi" prefWidth="120"/>
+                                    <TableColumn fx:id="scoreTopicCol" text="Mavzu/Nom" prefWidth="200"/>
                                     <TableColumn fx:id="attScoreCol" text="Ball" prefWidth="100"/>
                                 </columns>
                             </TableView>
