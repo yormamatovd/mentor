@@ -59,6 +59,7 @@ if (-not $IsWindows -and $PSVersionTable.PSVersion.Major -ge 6) {
 
 # Verify Java 17+
 Write-Info "Checking Java version..."
+Write-Info "$env:JAVA_HOME\bin\java.exe"
 
 $javaCmd = $null
 
