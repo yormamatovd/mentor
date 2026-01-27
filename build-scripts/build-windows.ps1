@@ -25,6 +25,7 @@ $PROJECT_ROOT = Split-Path -Parent $SCRIPT_DIR
 $TARGET_DIR = Join-Path $PROJECT_ROOT "target"
 $INSTALLER_DIR = Join-Path $TARGET_DIR "installer"
 $LIBS_DIR = Join-Path $TARGET_DIR "libs"
+$JPACKAGE_INPUT = Join-Path $TARGET_DIR "jpackage-input"
 
 # Color output functions
 function Write-Info {
@@ -58,21 +59,39 @@ if (-not $IsWindows -and $PSVersionTable.PSVersion.Major -ge 6) {
 
 # Verify Java 17+
 Write-Info "Checking Java version..."
+
+$javaCmd = $null
+
+if ($env:JAVA_HOME -and (Test-Path "$env:JAVA_HOME\bin\java.exe")) {
+    $javaCmd = "$env:JAVA_HOME\bin\java.exe"
+    Write-Info "Using JAVA_HOME java: $javaCmd"
+}
+elseif (Get-Command java -ErrorAction SilentlyContinue) {
+    $javaCmd = "java"
+    Write-Info "Using java from PATH"
+}
+else {
+    Write-Err "Java not found. Install Java 17+ to build the application"
+    exit 1
+}
+
 try {
-    $javaVersion = & java -version 2>&1 | Select-String "version" | ForEach-Object { $_ -replace '.*"(\d+).*', '$1' }
+    $versionOutput = & $javaCmd -version 2>&1
+    $javaVersion = ($versionOutput | Select-String 'version').Line -replace '.*"(\d+).*', '$1'
     $javaVersionNum = [int]$javaVersion
-    
+
     if ($javaVersionNum -lt 17) {
         Write-Err "Java 17+ required. Found Java $javaVersionNum"
         exit 1
     }
-    
+
     Write-Info "Java $javaVersionNum detected"
 }
 catch {
-    Write-Err "Java not found. Install Java 17+ to build the application"
+    Write-Err "Failed to execute Java"
     exit 1
 }
+
 
 # Verify JAVA_HOME
 if (-not $env:JAVA_HOME) {
@@ -132,6 +151,19 @@ if (-not (Test-Path $LIBS_DIR) -or (Get-ChildItem $LIBS_DIR).Count -eq 0) {
 $depCount = (Get-ChildItem $LIBS_DIR).Count
 Write-Info "Dependencies found: $depCount files"
 
+# Prepare jpackage input directory (avoid recursive copy issue)
+Write-Info "Preparing jpackage input directory..."
+if (Test-Path $JPACKAGE_INPUT) {
+    Remove-Item -Path $JPACKAGE_INPUT -Recurse -Force
+}
+New-Item -ItemType Directory -Path $JPACKAGE_INPUT -Force | Out-Null
+
+# Copy JAR and dependencies to staging directory
+Copy-Item -Path "$TARGET_DIR\$MAIN_JAR" -Destination $JPACKAGE_INPUT
+Copy-Item -Path $LIBS_DIR -Destination $JPACKAGE_INPUT -Recurse
+
+Write-Info "Staging directory ready: $JPACKAGE_INPUT"
+
 # Create .exe installer with jpackage
 Write-Header "Creating Windows .exe Installer"
 Write-Info "Using jpackage with embedded JRE..."
@@ -142,10 +174,9 @@ $jpackageArgs = @(
     "--name", $APP_NAME,
     "--app-version", $APP_VERSION,
     "--vendor", $VENDOR,
-    "--input", $TARGET_DIR,
+    "--input", $JPACKAGE_INPUT,
     "--main-jar", $MAIN_JAR,
     "--main-class", $MAIN_CLASS,
-    "--runtime-image", $env:JAVA_HOME,
     "--java-options", "-Xmx1024m",
     "--java-options", "-Xms256m",
     "--win-dir-chooser",

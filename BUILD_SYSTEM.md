@@ -20,7 +20,10 @@ mentor/
 ├── pom.xml                         # Maven configuration
 └── target/
     ├── mentor-1.0.0.jar            # Built JAR
-    ├── libs/                       # Dependencies
+    ├── libs/                       # Dependencies (36 JARs)
+    ├── jpackage-input/             # Staging dir for jpackage (auto-created)
+    │   ├── mentor-1.0.0.jar
+    │   └── libs/
     └── installer/                  # Generated installers
         ├── Mentor.app              # macOS app (built locally)
         ├── Mentor-1.0.0.dmg        # macOS installer (built locally)
@@ -159,6 +162,15 @@ Modify `--java-options` in jpackage commands:
 --java-options "-Xmx1024m"  # Max heap
 --java-options "-Xms256m"   # Initial heap
 ```
+
+### Runtime Configuration
+jpackage automatically:
+- Includes all JARs from `--input` directory (target/)
+- Detects required Java modules by analyzing bytecode
+- Bundles JavaFX libraries from dependencies
+- Creates minimal JRE with only needed modules
+
+No need to specify `--add-modules` for most applications.
 
 ### Add Icons
 

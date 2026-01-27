@@ -139,6 +139,13 @@ Modify `--java-options` in jpackage commands:
 - `-Xmx1024m` - Maximum heap
 - `-Xms256m` - Initial heap
 
+### Runtime Bundling
+jpackage automatically:
+- Analyzes bytecode to detect required modules
+- Includes all dependencies from `target/libs/`
+- Creates minimal JRE with only needed components
+- No need to manually specify modules
+
 ### Windows Installer Options
 In `build-windows.ps1`:
 - `--win-dir-chooser` - Let user choose install directory

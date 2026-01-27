@@ -22,6 +22,7 @@ MAIN_JAR="mentor-1.0.0.jar"
 TARGET_DIR="$PROJECT_ROOT/target"
 INSTALLER_DIR="$TARGET_DIR/installer"
 LIBS_DIR="$TARGET_DIR/libs"
+JPACKAGE_INPUT="$TARGET_DIR/jpackage-input"
 
 # Colors
 GREEN='\033[0;32m'
@@ -89,6 +90,17 @@ fi
 
 log_info "Dependencies found: $(ls $LIBS_DIR | wc -l | xargs) files"
 
+# Prepare jpackage input directory (avoid recursive copy issue)
+log_info "Preparing jpackage input directory..."
+rm -rf "$JPACKAGE_INPUT"
+mkdir -p "$JPACKAGE_INPUT"
+
+# Copy JAR and dependencies to staging directory
+cp "$TARGET_DIR/$MAIN_JAR" "$JPACKAGE_INPUT/"
+cp -r "$LIBS_DIR" "$JPACKAGE_INPUT/"
+
+log_info "Staging directory ready: $JPACKAGE_INPUT"
+
 # Create .app bundle with jpackage
 log_info "Creating .app bundle with embedded JRE..."
 
@@ -98,10 +110,9 @@ jpackage \
     --name "$APP_NAME" \
     --app-version "$APP_VERSION" \
     --vendor "$VENDOR" \
-    --input "$TARGET_DIR" \
+    --input "$JPACKAGE_INPUT" \
     --main-jar "$MAIN_JAR" \
     --main-class "$MAIN_CLASS" \
-    --runtime-image "$JAVA_HOME" \
     --java-options "-Xmx1024m" \
     --java-options "-Xms256m"
 
@@ -121,10 +132,9 @@ jpackage \
     --name "$APP_NAME" \
     --app-version "$APP_VERSION" \
     --vendor "$VENDOR" \
-    --input "$TARGET_DIR" \
+    --input "$JPACKAGE_INPUT" \
     --main-jar "$MAIN_JAR" \
     --main-class "$MAIN_CLASS" \
-    --runtime-image "$JAVA_HOME" \
     --java-options "-Xmx1024m" \
     --java-options "-Xms256m" \
     --mac-package-name "$APP_NAME"
