@@ -22,11 +22,11 @@
         
         <HBox spacing="20.0">
             <VBox prefWidth="250.0" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 0); -fx-border-color: #edf2f7; -fx-border-radius: 12;">
-                <Label text="O'quvchilar" style="-fx-text-fill: #718096; -fx-font-size: 14;"/>
+                <Label text="Jami o'quvchilar" style="-fx-text-fill: #718096; -fx-font-size: 14;"/>
                 <Label fx:id="studentCountLabel" text="--" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
             </VBox>
             <VBox prefWidth="250.0" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 0); -fx-border-color: #edf2f7; -fx-border-radius: 12;">
-                <Label text="Guruhlar" style="-fx-text-fill: #718096; -fx-font-size: 14;"/>
+                <Label text="Jami guruhlar" style="-fx-text-fill: #718096; -fx-font-size: 14;"/>
                 <Label fx:id="groupCountLabel" text="--" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
             </VBox>
             <VBox prefWidth="250.0" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 0); -fx-border-color: #edf2f7; -fx-border-radius: 12;">

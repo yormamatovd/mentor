@@ -1,5 +1,8 @@
 package org.algo.mentor.controllers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javafx.animation.FadeTransition;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
@@ -33,6 +36,7 @@ import java.util.List;
  * Yangi talablar bo'yicha dinamik UI va auto-save logikasi kiritilgan.
  */
 public class LessonsController implements NavigableController {
+    private static final Logger logger = LoggerFactory.getLogger(LessonsController.class);
     
     // FXML elementlari
     @FXML private VBox groupSelectionView;
@@ -300,7 +304,7 @@ public class LessonsController implements NavigableController {
             updateStudentBoxStyle(box, att.isPresent());
 
             Label name = new Label(att.getStudentName());
-            System.out.println("Rendering attendance for: " + att.getStudentName());
+            logger.debug("Rendering attendance for student: {}", att.getStudentName());
             name.setPrefWidth(200);
             name.setStyle("-fx-font-weight: bold; -fx-text-fill: #2d3748;");
 

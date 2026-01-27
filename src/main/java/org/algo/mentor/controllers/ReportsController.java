@@ -58,7 +58,6 @@ public class ReportsController implements NavigableController {
     @FXML private TableColumn<ReportService.LessonScoreRow, String> attDateCol;
     @FXML private TableColumn<ReportService.LessonScoreRow, String> attStatusCol;
     @FXML private TableColumn<ReportService.LessonScoreRow, String> scoreTypeCol;
-    @FXML private TableColumn<ReportService.LessonScoreRow, String> scoreTopicCol;
     @FXML private TableColumn<ReportService.LessonScoreRow, Double> attScoreCol;
     @FXML private PieChart individualAttendancePie;
     @FXML private LineChart<String, Number> performanceChart;
@@ -177,15 +176,20 @@ public class ReportsController implements NavigableController {
     private void setupIndividualStatsTable() {
         attDateCol.setCellValueFactory(cd -> {
             String date = cd.getValue().date();
-            if (date != null && date.length() >= 10) {
-                return new ReadOnlyObjectWrapper<>(date.substring(8, 10) + "." + date.substring(5, 7));
+            if (date != null && date.length() >= 16) {
+                String year = date.substring(0, 4);
+                String month = date.substring(5, 7);
+                String day = date.substring(8, 10);
+                String time = date.substring(11, 16);
+                return new ReadOnlyObjectWrapper<>(year + "." + month + "." + day + " " + time);
+            } else if (date != null && date.length() >= 10) {
+                return new ReadOnlyObjectWrapper<>(date.substring(0, 4) + "." + date.substring(5, 7) + "." + date.substring(8, 10));
             }
             return new ReadOnlyObjectWrapper<>(date);
         });
         
         attStatusCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().status()));
         scoreTypeCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().scoreType()));
-        scoreTopicCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().topic()));
         attScoreCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().score()));
         
         attStatusCol.setCellFactory(tc -> new TableCell<>() {
@@ -205,7 +209,34 @@ public class ReportsController implements NavigableController {
         attScoreCol.setCellFactory(tc -> new TableCell<>() {
             @Override protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty || item == null ? null : String.format("%.1f", item));
+                setText(empty || item == null ? "-" : String.format("%.1f", item));
+            }
+        });
+        
+        individualAttTable.setRowFactory(tv -> new TableRow<>() {
+            @Override
+            protected void updateItem(ReportService.LessonScoreRow item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setStyle("");
+                } else {
+                    setStyle(shouldHaveGrayBackground(getIndex()) ? "-fx-background-color: #e1e1e1;" : "");
+                }
+            }
+            
+            private boolean shouldHaveGrayBackground(int currentIndex) {
+                if (currentIndex < 0 || getTableView() == null || getTableView().getItems() == null 
+                    || currentIndex >= getTableView().getItems().size()) {
+                    return false;
+                }
+                
+                boolean isGray = false;
+                for (int i = 0; i <= currentIndex; i++) {
+                    if (i == 0 || !getTableView().getItems().get(i).date().equals(getTableView().getItems().get(i - 1).date())) {
+                        isGray = !isGray;
+                    }
+                }
+                return isGray;
             }
         });
     }

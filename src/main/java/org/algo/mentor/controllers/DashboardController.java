@@ -40,8 +40,8 @@ public class DashboardController implements NavigableController {
     }
 
     private void startClock() {
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("d-MMMM, yyyy");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         ZoneId tashkentZone = ZoneId.of("Asia/Tashkent");
 
         clockTimeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {

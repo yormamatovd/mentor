@@ -94,8 +94,8 @@
         </VBox>
         
         <HBox spacing="10.0">
-            <Button text="Bekor qilish" onAction="#closeExportSidebar" styleClass="btn, btn-default" prefWidth="Infinity"/>
-            <Button text="Eksport" onAction="#onPerformExportClick" styleClass="btn, btn-primary" prefWidth="Infinity"/>
+            <Button text="Bekor qilish" onAction="#closeExportSidebar" styleClass="btn, btn-default" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            <Button text="Eksport" onAction="#onPerformExportClick" styleClass="btn, btn-primary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
         </HBox>
     </VBox>
     
@@ -162,8 +162,8 @@
         </VBox>
         
         <HBox spacing="10.0">
-            <Button text="Bekor qilish" onAction="#closeSidebar" styleClass="btn, btn-default" prefWidth="Infinity"/>
-            <Button text="Saqlash" onAction="#onSaveScheduleClick" styleClass="btn, btn-primary" prefWidth="Infinity"/>
+            <Button text="Bekor qilish" onAction="#closeSidebar" styleClass="btn, btn-default" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            <Button text="Saqlash" onAction="#onSaveScheduleClick" styleClass="btn, btn-primary" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
         </HBox>
     </VBox>
 </StackPane>

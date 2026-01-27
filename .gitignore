@@ -37,3 +37,17 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Production Build ###
+installers/
+distributions/
+build-resources/icons/windows/*.png
+build-resources/icons/windows/*.ico
+build-resources/icons/mac/*.png
+build-resources/icons/mac/*.icns
+build-resources/icons/mac/AppIcon.iconset/
+*.dmg
+*.exe
+*.msi
+*.pkg
+*.zip

@@ -317,7 +317,9 @@ public class ReportService {
             String dateStr = detail.date();
             String statusStr = detail.present() ? "Kelgan" : "Kelmagan";
             
-            if (detail.tests().isEmpty() && detail.homeworks().isEmpty() && detail.questions().isEmpty()) {
+            if (!detail.present()) {
+                rows.add(new LessonScoreRow(dateStr, statusStr, "-", "-", null));
+            } else if (detail.tests().isEmpty() && detail.homeworks().isEmpty() && detail.questions().isEmpty()) {
                 rows.add(new LessonScoreRow(dateStr, statusStr, "-", "-", 0.0));
             } else {
                 for (TestScore test : detail.tests()) {

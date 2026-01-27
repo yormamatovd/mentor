@@ -1,5 +1,8 @@
 package org.algo.mentor.services;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import java.sql.*;
@@ -9,6 +12,7 @@ import org.algo.mentor.config.DatabaseManager;
 import org.algo.mentor.models.Student;
 
 public class StudentService {
+    private static final Logger logger = LoggerFactory.getLogger(StudentService.class);
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public static ObservableList<Student> getAllStudents() {
@@ -23,12 +27,11 @@ public class StudentService {
                 Student student = createStudentFromResultSet(rs);
                 students.add(student);
             }
-            System.out.println("Loaded " + students.size() + " total students");
+            logger.info("Loaded {} total students", students.size());
             rs.close();
             stmt.close();
         } catch (SQLException e) {
-            System.err.println("Error loading all students: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error loading all students", e);
         }
         return students;
     }
@@ -48,12 +51,11 @@ public class StudentService {
                 Student student = createStudentFromResultSet(rs);
                 students.add(student);
             }
-            System.out.println("Loaded " + students.size() + " students for group " + groupId);
+            logger.info("Loaded {} students for group {}", students.size(), groupId);
             rs.close();
             pstmt.close();
         } catch (SQLException e) {
-            System.err.println("Error loading students for group " + groupId + ": " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Error loading students for group {}", groupId, e);
         }
         return students;
     }
@@ -76,7 +78,7 @@ public class StudentService {
             rs.close();
             pstmt.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error searching students by name: {}", searchText, e);
         }
         return students;
     }
@@ -97,7 +99,7 @@ public class StudentService {
             rs.close();
             pstmt.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error searching students by phone: {}", phone, e);
         }
         return students;
     }
@@ -118,7 +120,7 @@ public class StudentService {
             rs.close();
             pstmt.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error loading students by active status: {}", isActive, e);
         }
         return students;
     }
@@ -137,7 +139,7 @@ public class StudentService {
             rs.close();
             pstmt.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error getting student by id: {}", studentId, e);
         }
         return null;
     }
@@ -167,9 +169,10 @@ public class StudentService {
             }
             rs.close();
             pstmt.close();
+            logger.info("Added new student: {} {} (ID: {})", firstName, lastName, studentId);
             return studentId;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error adding student: {} {}", firstName, lastName, e);
             return -1;
         }
     }
@@ -184,8 +187,9 @@ public class StudentService {
 
             pstmt.executeUpdate();
             pstmt.close();
+            logger.debug("Added student {} to group {}", studentId, groupId);
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error adding student {} to group {}", studentId, groupId, e);
         }
     }
 
@@ -199,8 +203,9 @@ public class StudentService {
 
             pstmt.executeUpdate();
             pstmt.close();
+            logger.debug("Removed student {} from group {}", studentId, groupId);
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error removing student {} from group {}", studentId, groupId, e);
         }
     }
 
@@ -219,7 +224,7 @@ public class StudentService {
             rs.close();
             pstmt.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error getting groups for student {}", studentId, e);
         }
         return groupIds;
     }
@@ -244,8 +249,9 @@ public class StudentService {
 
             pstmt.executeUpdate();
             pstmt.close();
+            logger.info("Updated student {} {}", firstName, lastName);
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error updating student {}", studentId, e);
         }
     }
 
@@ -259,8 +265,9 @@ public class StudentService {
 
             pstmt.executeUpdate();
             pstmt.close();
+            logger.info("Set student {} active status to {}", studentId, isActive);
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error setting student {} active status", studentId, e);
         }
     }
 
@@ -273,8 +280,9 @@ public class StudentService {
 
             pstmt.executeUpdate();
             pstmt.close();
+            logger.info("Deleted student {}", studentId);
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error deleting student {}", studentId, e);
         }
     }
 
@@ -291,9 +299,10 @@ public class StudentService {
 
             pstmt.executeUpdate();
             pstmt.close();
+            logger.info("Updated student payment status");
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error updating student payment status", e);
             return false;
         }
     }
@@ -318,7 +327,7 @@ public class StudentService {
             rs.close();
             pstmt.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error in global search for: {}", queryText, e);
         }
         return students;
     }
@@ -373,7 +382,8 @@ public class StudentService {
             rs.close();
             pstmt.close();
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("Error searching students with filters - name: {}, phone: {}, status: {}, group: {}", 
+                    name, phone, status, groupName, e);
         }
         return students;
     }

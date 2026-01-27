@@ -60,7 +60,7 @@ public class ScheduleController implements NavigableController {
 
     private NavigationController navigationController;
     private final ObservableList<Schedule> allSchedules = FXCollections.observableArrayList();
-    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private final Map<Integer, ComboBox<String>> individualTimeCombos = new HashMap<>();
 
     @FXML

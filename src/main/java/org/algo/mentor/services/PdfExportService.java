@@ -49,7 +49,7 @@ public class PdfExportService {
                 .setBold()
                 .setTextAlignment(TextAlignment.CENTER));
         
-        document.add(new Paragraph("Sana: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")))
+        document.add(new Paragraph("Sana: " + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                 .setTextAlignment(TextAlignment.RIGHT)
                 .setFontSize(10));
 
@@ -88,36 +88,40 @@ public class PdfExportService {
 
         // Detailed Table
         document.add(new Paragraph("\nDarslar bo'yicha batafsil:").setBold().setFontSize(14));
-        Table detailsTable = new Table(UnitValue.createPercentArray(new float[]{1.5f, 1.2f, 1.2f, 2.5f, 1}));
+        Table detailsTable = new Table(UnitValue.createPercentArray(new float[]{1.5f, 1.2f, 1.2f, 1}));
         detailsTable.setWidth(UnitValue.createPercentValue(100));
 
         detailsTable.addHeaderCell(createHeaderCell("Sana"));
         detailsTable.addHeaderCell(createHeaderCell("Holati"));
-        detailsTable.addHeaderCell(createHeaderCell("Ball turi"));
-        detailsTable.addHeaderCell(createHeaderCell("Mavzu/Nom"));
+        detailsTable.addHeaderCell(createHeaderCell("Topshiriq"));
         detailsTable.addHeaderCell(createHeaderCell("Ball"));
 
+        String previousDateTime = null;
+        boolean isLightRow = false;
+        DeviceRgb lightGray = new DeviceRgb(225, 225, 225);
+        DeviceRgb white = new DeviceRgb(255, 255, 255);
+        
         for (ReportService.LessonScoreRow row : attendanceDetails) {
+            String currentDateTime = row.date();
             String formattedDate = row.date();
-            if (formattedDate != null && formattedDate.length() >= 16) {
-                String year = formattedDate.substring(0, 4);
-                String month = formattedDate.substring(5, 7);
-                String day = formattedDate.substring(8, 10);
-                String time = formattedDate.substring(11, 16);
-                formattedDate = year + "." + month + "." + day + " " + time;
-            } else if (formattedDate != null && formattedDate.length() >= 10) {
-                formattedDate = formattedDate.substring(0, 4) + "." + formattedDate.substring(5, 7) + "." + formattedDate.substring(8, 10);
-            }
-            detailsTable.addCell(new Cell().add(new Paragraph(formattedDate)).setFontSize(9));
             
-            Cell statusCell = new Cell().add(new Paragraph(row.status())).setFontSize(9);
+            if (previousDateTime == null || !currentDateTime.equals(previousDateTime)) {
+                isLightRow = !isLightRow;
+                previousDateTime = currentDateTime;
+            }
+            
+            DeviceRgb rowColor = isLightRow ? lightGray : white;
+            
+            detailsTable.addCell(new Cell().add(new Paragraph(formattedDate)).setFontSize(9).setBackgroundColor(rowColor));
+            
+            Cell statusCell = new Cell().add(new Paragraph(row.status())).setFontSize(9).setBackgroundColor(rowColor);
             if (row.status().equals("Kelgan")) statusCell.setFontColor(new DeviceRgb(56, 161, 105));
             else statusCell.setFontColor(new DeviceRgb(229, 62, 62));
             detailsTable.addCell(statusCell);
             
-            detailsTable.addCell(new Cell().add(new Paragraph(row.scoreType())).setFontSize(9));
-            detailsTable.addCell(new Cell().add(new Paragraph(row.topic())).setFontSize(9));
-            detailsTable.addCell(new Cell().add(new Paragraph(String.format("%.1f", row.score()))).setFontSize(9));
+            detailsTable.addCell(new Cell().add(new Paragraph(row.scoreType())).setFontSize(9).setBackgroundColor(rowColor));
+            String scoreText = row.score() == null ? "-" : String.format("%.1f", row.score());
+            detailsTable.addCell(new Cell().add(new Paragraph(scoreText)).setFontSize(9).setBackgroundColor(rowColor));
         }
 
         document.add(detailsTable);
@@ -164,8 +168,8 @@ public class PdfExportService {
                     .setBold()
                     .setMarginBottom(5));
 
-            document.add(new Paragraph("Dars jadvali: " + startDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")) + " - " +
-                    endDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")))
+            document.add(new Paragraph("Dars jadvali: " + startDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + " - " +
+                    endDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))
                     .setFontSize(12)
                     .setMarginBottom(15));
 
