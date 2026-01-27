@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="DataSourcePerFileMappings">
-    <file url="file://$PROJECT_DIR$/src/main/java/org/algo/mentor/services/LessonService.java" value="edbb0e26-1926-45f4-a6ba-847babfa5a65" />
-    <file url="file://$PROJECT_DIR$/src/main/java/org/algo/mentor/services/ReportService.java" value="edbb0e26-1926-45f4-a6ba-847babfa5a65" />
-  </component>
-</project>

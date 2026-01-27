@@ -1,0 +1,85 @@
+╔════════════════════════════════════════════════════════════════════════╗
+║                    MENTOR - PRODUCTION BUILD QUICKSTART                ║
+╚════════════════════════════════════════════════════════════════════════╝
+
+PREREQUISITES
+─────────────
+✓ Java 17 or higher (JDK, not JRE)
+✓ Maven 3.6+ (or use included mvnw)
+✓ ImageMagick (optional, for icon conversion)
+
+QUICK BUILD
+───────────
+Run this command to build installer for your platform:
+
+    ./build-production.sh
+
+BUILD OUTPUT
+────────────
+After successful build, find your installers in:
+
+    installers/mac/Mentor-1.0.0.dmg       (macOS)
+    installers/windows/Mentor-1.0.0.exe   (Windows)
+
+SPECIFIC PLATFORM
+─────────────────
+Build only for specific platform:
+
+    ./build-production.sh mac       # macOS only
+    ./build-production.sh windows   # Windows only
+
+WHAT'S INCLUDED
+───────────────
+Each installer contains:
+✓ Complete application with all dependencies
+✓ Bundled Java Runtime (users don't need Java installed)
+✓ SQLite database (auto-created on first run)
+✓ Desktop shortcuts and menu entries
+✓ Application icon
+
+CUSTOMIZATION
+─────────────
+Replace icon:
+    cp your-icon.svg build-resources/icons/icon.svg
+
+Change version:
+    Edit pom.xml: <version>1.0.1</version>
+    Edit build-resources/config/app-info.properties
+
+Adjust memory:
+    Edit build-resources/config/jvm-options.txt
+    
+DISTRIBUTION
+────────────
+macOS (.dmg):
+    1. Mount DMG file
+    2. Drag to Applications
+    3. Launch from Applications
+
+Windows (.exe):
+    1. Run installer
+    2. Follow wizard
+    3. Launch from Start Menu or Desktop
+
+TROUBLESHOOTING
+───────────────
+"jpackage not found"
+→ Install JDK 17+ (not JRE)
+
+"Maven build failed"
+→ Run: ./mvnw clean install
+
+Icons not created
+→ Install ImageMagick: brew install imagemagick
+
+GETTING HELP
+────────────
+See detailed documentation in:
+    BUILD_GUIDE.md
+
+Quick test without installer:
+    ./mvnw javafx:run
+
+═══════════════════════════════════════════════════════════════════════
+Ready to build! Run: ./build-production.sh
+═══════════════════════════════════════════════════════════════════════
