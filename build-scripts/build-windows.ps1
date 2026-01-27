@@ -78,6 +78,8 @@ else {
 
 try {
     $versionOutput = & $javaCmd -version 2>&1
+    Write-Info "$versionOutput"
+
     $javaVersion = ($versionOutput | Select-String 'version').Line -replace '.*"(\d+).*', '$1'
     $javaVersionNum = [int]$javaVersion
 
