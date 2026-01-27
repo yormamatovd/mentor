@@ -59,42 +59,36 @@ if (-not $IsWindows -and $PSVersionTable.PSVersion.Major -ge 6) {
 
 # Verify Java 17+
 Write-Info "Checking Java version..."
-Write-Info "$env:JAVA_HOME\bin\java.exe"
+$javaCmd = "$env:JAVA_HOME\bin\java.exe"
 
-$javaCmd = $null
-
-if ($env:JAVA_HOME -and (Test-Path "$env:JAVA_HOME\bin\java.exe")) {
-    $javaCmd = "$env:JAVA_HOME\bin\java.exe"
-    Write-Info "Using JAVA_HOME java: $javaCmd"
-}
-elseif (Get-Command java -ErrorAction SilentlyContinue) {
-    $javaCmd = "java"
-    Write-Info "Using java from PATH"
-}
-else {
-    Write-Err "Java not found. Install Java 17+ to build the application"
+if (-not (Test-Path $javaCmd)) {
+    Write-Err "Java executable not found at $javaCmd"
     exit 1
 }
 
-try {
-    Write-Info "aaa"
-    $versionOutput = & $javaCmd -version 2>&1
-    Write-Info "$versionOutput"
+# Capture version using Start-Process
+$stderrFile = Join-Path $env:TEMP "java_version.txt"
+if (Test-Path $stderrFile) { Remove-Item $stderrFile -Force }
 
-    $javaVersion = ($versionOutput | Select-String 'version').Line -replace '.*"(\d+).*', '$1'
-    $javaVersionNum = [int]$javaVersion
+Start-Process -FilePath $javaCmd -ArgumentList "-version" `
+    -RedirectStandardError $stderrFile -NoNewWindow -Wait
 
-    if ($javaVersionNum -lt 17) {
-        Write-Err "Java 17+ required. Found Java $javaVersionNum"
-        exit 1
-    }
+$versionOutput = Get-Content $stderrFile
 
-    Write-Info "Java $javaVersionNum detected"
-}
-catch {
-    Write-Err "Failed to execute Java"
+Write-Info "Java version output:"
+$versionOutput | ForEach-Object { Write-Host $_ }
+
+# Extract version number
+$javaVersion = ($versionOutput | Select-String 'version').Line -replace '.*"(\d+).*', '$1'
+$javaVersionNum = [int]$javaVersion
+
+if ($javaVersionNum -lt 17) {
+    Write-Err "Java 17+ required. Found Java $javaVersionNum"
     exit 1
 }
+
+Write-Info "Java $javaVersionNum detected"
+
 
 
 # Verify JAVA_HOME
