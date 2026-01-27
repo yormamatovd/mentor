@@ -77,6 +77,7 @@ else {
 }
 
 try {
+    Write-Info "aaa"
     $versionOutput = & $javaCmd -version 2>&1
     Write-Info "$versionOutput"
 
