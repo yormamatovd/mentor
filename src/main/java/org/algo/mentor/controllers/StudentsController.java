@@ -399,7 +399,6 @@ public class StudentsController implements NavigableController {
         deleteConfirmBox.setVisible(false);
         deleteConfirmBox.setManaged(false);
         actionButtonsBox.setVisible(true);
-        actionButtonsBox.setManaged(true);
     }
 
     private void animateSidebar(VBox sidebar, double toX) {
@@ -495,7 +494,6 @@ public class StudentsController implements NavigableController {
         deleteConfirmBox.setVisible(true);
         deleteConfirmBox.setManaged(true);
         actionButtonsBox.setVisible(false);
-        actionButtonsBox.setManaged(false);
     }
 
     @FXML

@@ -101,6 +101,16 @@ cp -r "$LIBS_DIR" "$JPACKAGE_INPUT/"
 
 log_info "Staging directory ready: $JPACKAGE_INPUT"
 
+# Check for icon file
+ICON_PATH="$PROJECT_ROOT/build-resources/icon.icns"
+ICON_ARGS=""
+if [ -f "$ICON_PATH" ]; then
+    ICON_ARGS="--icon $ICON_PATH"
+    log_info "Using application icon: $ICON_PATH"
+else
+    log_warn "Icon file not found at $ICON_PATH"
+fi
+
 # Create .app bundle with jpackage
 log_info "Creating .app bundle with embedded JRE..."
 
@@ -114,7 +124,8 @@ jpackage \
     --main-jar "$MAIN_JAR" \
     --main-class "$MAIN_CLASS" \
     --java-options "-Xmx1024m" \
-    --java-options "-Xms256m"
+    --java-options "-Xms256m" \
+    $ICON_ARGS
 
 if [ $? -ne 0 ]; then
     log_error ".app bundle creation failed"
@@ -137,7 +148,8 @@ jpackage \
     --main-class "$MAIN_CLASS" \
     --java-options "-Xmx1024m" \
     --java-options "-Xms256m" \
-    --mac-package-name "$APP_NAME"
+    --mac-package-name "$APP_NAME" \
+    $ICON_ARGS
 
 if [ $? -ne 0 ]; then
     log_error ".dmg creation failed"

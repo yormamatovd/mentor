@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <!-- Custom UI sequence with information dialog -->
+    <UI>
+      <!-- Use built-in UI with modifications -->
+      <UIRef Id="WixUI_InstallDir" />
+      
+      <!-- Custom welcome dialog text -->
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="CustomInfoDlg" Order="2">1</Publish>
+      
+      <!-- Progress messages for slower installation feel -->
+      <ProgressText Action="InstallFiles">Copying application files to your computer...</ProgressText>
+      <ProgressText Action="CreateShortcuts">Creating shortcuts...</ProgressText>
+      <ProgressText Action="RegisterProduct">Registering Mentor...</ProgressText>
+      <ProgressText Action="WriteRegistryValues">Updating system settings...</ProgressText>
+    </UI>
+    
+    <!-- Information Dialog -->
+    <UI>
+      <Dialog Id="CustomInfoDlg" Width="370" Height="270" Title="[ProductName] - Information">
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes">
+          <Text>{\WixUI_Font_Title}About [ProductName]</Text>
+        </Control>
+        
+        <Control Id="Description" Type="Text" X="20" Y="50" Width="330" Height="120" Transparent="yes" NoPrefix="yes">
+          <Text>Mentor is a comprehensive student management platform designed for educational institutions.
+
+Key Features:
+• Student enrollment and profile management
+• Group and class organization
+• Payment tracking and financial records  
+• Schedule and attendance management
+• Performance analytics and reporting
+
+This application will help streamline your institution's administrative tasks efficiently.</Text>
+        </Control>
+        
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
+          <Publish Event="NewDialog" Value="WelcomeDlg">1</Publish>
+        </Control>
+        
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
+          <Publish Event="NewDialog" Value="InstallDirDlg">1</Publish>
+        </Control>
+        
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+      </Dialog>
+    </UI>
+    
+    <!-- Desktop shortcut checkbox dialog -->
+    <UI>
+      <Dialog Id="ShortcutsDlg" Width="370" Height="270" Title="[ProductName] - Shortcuts">
+        <Control Id="Title" Type="Text" X="15" Y="6" Width="200" Height="15" Transparent="yes" NoPrefix="yes">
+          <Text>{\WixUI_Font_Title}Installation Options</Text>
+        </Control>
+        
+        <Control Id="Subtitle" Type="Text" X="20" Y="30" Width="330" Height="15" Transparent="yes" NoPrefix="yes">
+          <Text>Choose where to create shortcuts</Text>
+        </Control>
+        
+        <Control Id="DesktopShortcutCheckbox" Type="CheckBox" X="20" Y="60" Width="330" Height="17" Property="CREATE_DESKTOP_SHORTCUT" CheckBoxValue="1" Text="Create a &amp;desktop shortcut">
+        </Control>
+        
+        <Control Id="DesktopNote" Type="Text" X="35" Y="80" Width="315" Height="30" Transparent="yes" NoPrefix="yes">
+          <Text>A shortcut on your desktop provides quick access to Mentor.</Text>
+        </Control>
+        
+        <Control Id="StartMenuInfo" Type="Text" X="20" Y="120" Width="330" Height="30" Transparent="yes" NoPrefix="yes">
+          <Text>Note: A Start Menu shortcut will always be created so you can launch the application.</Text>
+        </Control>
+        
+        <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+        
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
+          <Publish Event="NewDialog" Value="InstallDirDlg">1</Publish>
+        </Control>
+        
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
+          <Publish Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+        </Control>
+        
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+      </Dialog>
+      
+      <!-- Insert shortcut dialog into sequence -->
+      <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="ShortcutsDlg" Order="4">1</Publish>
+    </UI>
+    
+    <!-- Desktop shortcut property (checked by default) -->
+    <Property Id="CREATE_DESKTOP_SHORTCUT" Value="1" />
+    
+    <!-- Slow down installation with progress reporting -->
+    <CustomAction Id="SlowInstallProgress" 
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="check"
+                  Script="jscript">
+    <![CDATA[
+      var progressRecord = Session.Installer.CreateRecord(3);
+      progressRecord.StringData(1) = "SlowInstallProgress";
+      progressRecord.StringData(2) = "Finalizing installation...";
+      progressRecord.IntegerData(3) = 15;
+      Session.Message(0x0B000000, progressRecord);
+      
+      for (var i = 0; i < 15; i++) {
+        WScript.Sleep(1000);
+        var tickRecord = Session.Installer.CreateRecord(2);
+        tickRecord.IntegerData(1) = 2;
+        tickRecord.IntegerData(2) = 1;
+        Session.Message(0x0A000000, tickRecord);
+      }
+    ]]>
+    </CustomAction>
+    
+    <!-- Schedule the delay action -->
+    <InstallExecuteSequence>
+      <Custom Action="SlowInstallProgress" After="InstallFiles">NOT Installed AND NOT REMOVE</Custom>
+    </InstallExecuteSequence>
+  </Fragment>
+</Wix>

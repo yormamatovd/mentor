@@ -37,6 +37,7 @@ public class GroupsController implements NavigableController {
     private NavigationController navigationController;
     private Group selectedGroup;
     private final ObservableList<Student> pendingStudents = FXCollections.observableArrayList();
+    private final ObservableList<Student> studentsToRemove = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
@@ -112,6 +113,7 @@ public class GroupsController implements NavigableController {
     private void openGroupSidebar(Group group) {
         this.selectedGroup = group;
         this.pendingStudents.clear();
+        this.studentsToRemove.clear();
         groupNameField.setStyle(""); // Reset validation style
         if (group != null) {
             groupNameField.setText(group.getName());
@@ -147,28 +149,42 @@ public class GroupsController implements NavigableController {
         }
         
         for (Student s : students) {
-            groupStudentsVBox.getChildren().add(createStudentRow(s));
+            boolean markedForRemoval = studentsToRemove.stream().anyMatch(st -> st.getId() == s.getId());
+            groupStudentsVBox.getChildren().add(createStudentRow(s, markedForRemoval));
         }
     }
 
-    private HBox createStudentRow(Student s) {
+    private HBox createStudentRow(Student s, boolean markedForRemoval) {
         HBox row = new HBox(10);
         row.setAlignment(Pos.CENTER_LEFT);
-        row.setStyle("-fx-background-color: #ffffff; -fx-padding: 12; -fx-border-color: #f1f5f9; -fx-border-radius: 8; -fx-background-radius: 8;");
+        
+        String bgColor = markedForRemoval ? "#fee2e2" : "#ffffff";
+        String borderColor = markedForRemoval ? "#fca5a5" : "#f1f5f9";
+        row.setStyle("-fx-background-color: " + bgColor + "; -fx-padding: 12; -fx-border-color: " + borderColor + "; -fx-border-radius: 8; -fx-background-radius: 8;");
         
         VBox info = new VBox(2);
         Label name = new Label(s.getFirstName() + " " + s.getLastName());
-        name.setStyle("-fx-font-weight: bold; -fx-text-fill: #334155;");
+        String nameColor = markedForRemoval ? "#991b1b" : "#334155";
+        name.setStyle("-fx-font-weight: bold; -fx-text-fill: " + nameColor + ";");
         Label phone = new Label(s.getPhone());
-        phone.setStyle("-fx-font-size: 11; -fx-text-fill: #64748b;");
+        String phoneColor = markedForRemoval ? "#dc2626" : "#64748b";
+        phone.setStyle("-fx-font-size: 11; -fx-text-fill: " + phoneColor + ";");
         info.getChildren().addAll(name, phone);
         
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
         
-        Button removeBtn = new Button("✕");
-        removeBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #94a3b8; -fx-cursor: hand; -fx-font-weight: bold;");
-        removeBtn.setOnAction(e -> removeStudentFromGroup(s));
+        Button removeBtn = new Button(markedForRemoval ? "↺" : "✕");
+        String btnColor = markedForRemoval ? "#dc2626" : "#94a3b8";
+        removeBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: " + btnColor + "; -fx-cursor: hand; -fx-font-weight: bold; -fx-font-size: 14;");
+        removeBtn.setOnAction(e -> {
+            if (markedForRemoval) {
+                studentsToRemove.removeIf(st -> st.getId() == s.getId());
+                loadGroupStudents();
+            } else {
+                removeStudentFromGroup(s);
+            }
+        });
         
         row.getChildren().addAll(info, spacer, removeBtn);
         return row;
@@ -207,13 +223,14 @@ public class GroupsController implements NavigableController {
 
     private void removeStudentFromGroup(Student student) {
         if (selectedGroup != null) {
-            StudentService.removeStudentFromGroup(student.getId(), selectedGroup.getId());
+            if (studentsToRemove.stream().noneMatch(st -> st.getId() == student.getId())) {
+                studentsToRemove.add(student);
+            }
         } else {
             pendingStudents.removeIf(s -> s.getId() == student.getId());
         }
         
         loadGroupStudents();
-        loadGroups();
     }
 
     @FXML
@@ -248,12 +265,21 @@ public class GroupsController implements NavigableController {
                 deleteGroupBtn.setManaged(true);
                 loadGroupStudents();
                 loadGroups();
+                closeSidebars();
             }
         } else {
-            // Mavjud guruhni tahrirlash (faqat nomi)
+            // Mavjud guruhni tahrirlash
             GroupService.renameGroup(selectedGroup.getId(), name);
             selectedGroup.setName(name);
+            
+            // O'chirilishi kerak bo'lgan o'quvchilarni o'chirish
+            for (Student s : studentsToRemove) {
+                StudentService.removeStudentFromGroup(s.getId(), selectedGroup.getId());
+            }
+            studentsToRemove.clear();
+            
             loadGroups();
+            closeSidebars();
         }
     }
 

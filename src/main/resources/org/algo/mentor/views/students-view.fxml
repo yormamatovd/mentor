@@ -93,7 +93,7 @@
                 </VBox>
                 <VBox spacing="5.0">
                     <Label text="Telegram Username" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
-                    <TextField fx:id="telegramField" promptText="@username" styleClass="form-control"/>
+                    <TextField fx:id="telegramField" promptText="Telegram username" styleClass="form-control"/>
                 </VBox>
                 
                 <Separator>
@@ -113,7 +113,7 @@
                 </VBox>
                 <VBox spacing="5.0">
                     <Label text="Telegrami" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
-                    <TextField fx:id="parentTelegramField" promptText="@username" styleClass="form-control"/>
+                    <TextField fx:id="parentTelegramField" promptText="Telegram username" styleClass="form-control"/>
                 </VBox>
                 
                 <VBox spacing="5.0">
@@ -133,15 +133,15 @@
             <VBox fx:id="deleteConfirmBox" visible="false" managed="false" spacing="10.0" style="-fx-background-color: #fff5f5; -fx-padding: 15; -fx-border-color: #feb2b2; -fx-border-radius: 5; -fx-background-radius: 5;">
                 <Label text="Siz haqiqatdan ham ushbu o'quvchini o'chirmoqchimisiz?" wrapText="true" style="-fx-text-fill: #c53030; -fx-font-weight: bold; -fx-font-size: 12;"/>
                 <HBox spacing="10.0">
-                    <Button text="Ha, o'chirilsin" onAction="#onConfirmDeleteClick" styleClass="btn, btn-danger" prefWidth="Infinity"/>
-                    <Button text="Yo'q, o'chirilmasin" onAction="#onCancelDeleteClick" styleClass="btn, btn-default" prefWidth="Infinity"/>
+                    <Button text="Ha, o'chirilsin" onAction="#onConfirmDeleteClick" styleClass="btn, btn-danger" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                    <Button text="Yo'q, o'chirilmasin" onAction="#onCancelDeleteClick" styleClass="btn, btn-default" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
                 </HBox>
             </VBox>
             
-            <HBox fx:id="actionButtonsBox" spacing="10.0">
-                <Button fx:id="deleteBtn" text="O'chirish" onAction="#onDeleteStudentClick" styleClass="btn, btn-danger" prefWidth="120"/>
+            <HBox fx:id="actionButtonsBox" spacing="10.0" managed="${actionButtonsBox.visible}">
+                <Button fx:id="deleteBtn" text="O'chirish" onAction="#onDeleteStudentClick" styleClass="btn, btn-danger" prefWidth="110"/>
                 <Region HBox.hgrow="ALWAYS" />
-                <Button text="Bekor qilish" onAction="#closeSidebars" styleClass="btn, btn-default" prefWidth="100"/>
+                <Button text="Bekor qilish" onAction="#closeSidebars" styleClass="btn, btn-default" prefWidth="110"/>
                 <Button text="Saqlash" onAction="#onSaveStudentClick" styleClass="btn, btn-primary" prefWidth="100"/>
             </HBox>
         </VBox>
@@ -168,26 +168,24 @@
         </HBox>
         
         <!-- New Payment Form -->
-        <VBox spacing="10.0" style="-fx-background-color: #f8f9fa; -fx-padding: 15; -fx-background-radius: 5; -fx-border-color: #e9ecef; -fx-border-radius: 5;">
-            <Label text="Yangi to'lov" style="-fx-font-weight: bold;"/>
-            <HBox spacing="10.0" alignment="CENTER_LEFT">
-                <VBox spacing="5.0" HBox.hgrow="ALWAYS" minWidth="170.0">
-                    <Label text="Boshlanish sanasi" style="-fx-font-size: 11;"/>
-                    <DatePicker fx:id="paymentFromDatePicker" maxWidth="Infinity" prefHeight="35.0"/>
-                </VBox>
-                <VBox spacing="5.0" HBox.hgrow="ALWAYS" minWidth="170.0">
-                    <Label text="Tugash sanasi" style="-fx-font-size: 11;"/>
-                    <DatePicker fx:id="paymentToDatePicker" maxWidth="Infinity" prefHeight="35.0"/>
-                </VBox>
-            </HBox>
+        <VBox spacing="15.0" style="-fx-background-color: #f8f9fa; -fx-padding: 20; -fx-background-radius: 8; -fx-border-color: #e9ecef; -fx-border-radius: 8;">
+            <Label text="Yangi to'lov" style="-fx-font-weight: bold; -fx-font-size: 14; -fx-text-fill: #2c3e50;"/>
             <VBox spacing="5.0">
-                <Label text="Summa" style="-fx-font-size: 11;"/>
-                <HBox spacing="5.0" alignment="CENTER_LEFT">
-                    <TextField fx:id="paymentAmountField" promptText="0" styleClass="form-control" prefWidth="150.0"/>
-                    <Label text="so'm" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d;"/>
+                <Label text="Boshlanish sanasi" style="-fx-font-size: 12; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                <DatePicker fx:id="paymentFromDatePicker" maxWidth="Infinity" styleClass="form-control" prefHeight="38.0"/>
+            </VBox>
+            <VBox spacing="5.0">
+                <Label text="Tugash sanasi" style="-fx-font-size: 12; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                <DatePicker fx:id="paymentToDatePicker" maxWidth="Infinity" styleClass="form-control" prefHeight="38.0"/>
+            </VBox>
+            <VBox spacing="5.0">
+                <Label text="Summa" style="-fx-font-size: 12; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                <HBox spacing="8.0" alignment="CENTER_LEFT">
+                    <TextField fx:id="paymentAmountField" promptText="0" styleClass="form-control" HBox.hgrow="ALWAYS"/>
+                    <Label text="so'm" style="-fx-font-weight: bold; -fx-text-fill: #7f8c8d; -fx-font-size: 13;"/>
                 </HBox>
             </VBox>
-            <Button text="To'lovni saqlash" onAction="#onSavePaymentClick" styleClass="btn, btn-success" prefWidth="Infinity">
+            <Button text="To'lovni saqlash" onAction="#onSavePaymentClick" styleClass="btn, btn-success" prefWidth="Infinity" prefHeight="38.0">
                 <VBox.margin>
                     <Insets top="5.0"/>
                 </VBox.margin>

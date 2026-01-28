@@ -162,16 +162,27 @@ Copy-Item -Path $LIBS_DIR -Destination $JPACKAGE_INPUT -Recurse
 
 Write-Info "Staging directory ready: $JPACKAGE_INPUT"
 
+# Check for icon file
+$ICON_PATH = Join-Path $PROJECT_ROOT "build-resources\icon.ico"
+$HAS_ICON = Test-Path $ICON_PATH
+
+if (-not $HAS_ICON) {
+    Write-Warn "Icon file not found at $ICON_PATH"
+    Write-Warn "Generate icon.ico from icon.svg using ImageMagick or online converter"
+    Write-Warn "See build-resources/README.md for instructions"
+}
+
 # Create .exe installer with jpackage
 Write-Header "Creating Windows .exe Installer"
 Write-Info "Using jpackage with embedded JRE..."
 
 $jpackageArgs = @(
-    "--type", "exe",
+    "--type", "msi",
     "--dest", $INSTALLER_DIR,
     "--name", $APP_NAME,
     "--app-version", $APP_VERSION,
     "--vendor", $VENDOR,
+    "--description", "Student management and teaching platform for educational institutions",
     "--input", $JPACKAGE_INPUT,
     "--main-jar", $MAIN_JAR,
     "--main-class", $MAIN_CLASS,
@@ -179,8 +190,23 @@ $jpackageArgs = @(
     "--java-options", "-Xms256m",
     "--win-dir-chooser",
     "--win-menu",
-    "--win-shortcut"
+    "--win-shortcut",
+    "--win-menu-group", "Algo",
+    "--win-per-user-install"
 )
+
+# Add icon if available
+if ($HAS_ICON) {
+    $jpackageArgs += @("--icon", $ICON_PATH)
+    Write-Info "Using application icon: $ICON_PATH"
+}
+
+# Check for custom WiX file
+$WIX_FILE = Join-Path $PROJECT_ROOT "build-resources\main.wxs"
+if (Test-Path $WIX_FILE) {
+    $jpackageArgs += @("--resource-dir", (Join-Path $PROJECT_ROOT "build-resources"))
+    Write-Info "Using custom WiX configuration for enhanced installer"
+}
 
 Write-Info "Running jpackage..."
 & jpackage $jpackageArgs
@@ -191,18 +217,23 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # Find installer
-$exeFile = Get-ChildItem -Path $INSTALLER_DIR -Filter "*.exe" | Select-Object -First 1
+$installerFile = Get-ChildItem -Path $INSTALLER_DIR -Filter "*.msi" | Select-Object -First 1
 
-if (-not $exeFile) {
+if (-not $installerFile) {
     Write-Err "Installer not found in $INSTALLER_DIR"
     exit 1
 }
 
 # Display results
 Write-Header "Windows Build Complete!"
-Write-Info "Installer: $($exeFile.FullName)"
-Write-Info "Size: $([math]::Round($exeFile.Length / 1MB, 2)) MB"
+Write-Info "Installer: $($installerFile.FullName)"
+Write-Info "Size: $([math]::Round($installerFile.Length / 1MB, 2)) MB"
 Write-Info ""
 Write-Info "End users can install without Java!"
+Write-Info ""
+if (-not $HAS_ICON) {
+    Write-Warn "Note: Build completed without custom icon"
+    Write-Warn "Generate icon.ico from build-resources/icon.svg for next build"
+}
 
 exit 0

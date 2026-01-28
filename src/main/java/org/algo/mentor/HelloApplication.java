@@ -23,10 +23,23 @@ public class HelloApplication extends Application {
         
         logger.debug("Loading main layout FXML");
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("views/main-layout.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 1400, 900);
+        Scene scene = new Scene(fxmlLoader.load(), 1100, 700);
         scene.getStylesheets().add(BootstrapFX.bootstrapFXStylesheet());
         stage.setTitle("Mentor");
         stage.setScene(scene);
+        stage.setResizable(true);
+        stage.setMinWidth(1000);
+        stage.setMinHeight(650);
+        stage.setMaximized(false);
+        
+        try {
+            stage.getIcons().add(new javafx.scene.image.Image(
+                HelloApplication.class.getResourceAsStream("icon.png")
+            ));
+        } catch (Exception e) {
+            logger.warn("Application icon not found: {}", e.getMessage());
+        }
+        
         logger.info("Showing main application window");
         stage.show();
         
