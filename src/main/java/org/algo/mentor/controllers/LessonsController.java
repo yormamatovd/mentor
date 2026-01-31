@@ -194,7 +194,7 @@ public class LessonsController implements NavigableController {
         expandSection(testSessionsContainer, testCollapseIcon);
         expandSection(questionSessionsContainer, questionCollapseIcon);
 
-        homeworkSection.setVisible(!homeworks.isEmpty() && homeworks.stream().anyMatch(h -> h.getScore() > 0));
+        homeworkSection.setVisible(!homeworks.isEmpty() && homeworks.stream().anyMatch(Homework::isGraded));
         homeworkSection.setManaged(homeworkSection.isVisible());
         
         renderAll();
@@ -358,14 +358,18 @@ public class LessonsController implements NavigableController {
             name.setPrefWidth(200);
             name.setStyle("-fx-text-fill: #2d3748;");
 
-            TextField scoreInput = new TextField(hw.getScore() > 0 ? String.valueOf(hw.getScore()) : "");
+            TextField scoreInput = new TextField(hw.isGraded() ? String.valueOf(hw.getScore()) : "");
             scoreInput.setPromptText("Ball");
             scoreInput.getStyleClass().add("homework-input");
             scoreInput.setPrefWidth(80);
             scoreInput.setDisable(!present || !isEditing);
             scoreInput.textProperty().addListener((obs, old, newVal) -> {
                 try {
-                    hw.setScore(newVal.isEmpty() ? 0.0 : Double.parseDouble(newVal));
+                    if (newVal.isEmpty()) {
+                        hw.clearScore();
+                    } else {
+                        hw.setScore(Double.parseDouble(newVal));
+                    }
                     triggerAutoSave();
                 } catch (NumberFormatException ignored) {}
             });
@@ -511,16 +515,21 @@ public class LessonsController implements NavigableController {
         name.setPrefWidth(150);
         name.setStyle("-fx-font-size: 13; -fx-text-fill: #2d3748;");
 
-        TextField secInput = new TextField(type.equals("test") ? ((TestResult)res).getSection() : ((QuestionResult)res).getSection());
-        secInput.setPromptText("Variant");
-        secInput.getStyleClass().add("input-medium");
-        secInput.setPrefWidth(120);
-        secInput.setDisable(!present || !isEditing);
-        secInput.textProperty().addListener((obs, old, newVal) -> {
-            if (type.equals("test")) ((TestResult)res).setSection(newVal);
-            else ((QuestionResult)res).setSection(newVal);
-            triggerAutoSave();
-        });
+        box.getChildren().add(name);
+
+        // Variant input faqat testlar uchun
+        if (type.equals("test")) {
+            TextField secInput = new TextField(((TestResult)res).getSection());
+            secInput.setPromptText("Variant");
+            secInput.getStyleClass().add("input-medium");
+            secInput.setPrefWidth(120);
+            secInput.setDisable(!present || !isEditing);
+            secInput.textProperty().addListener((obs, old, newVal) -> {
+                ((TestResult)res).setSection(newVal);
+                triggerAutoSave();
+            });
+            box.getChildren().add(secInput);
+        }
 
         // Counter (+ / -)
         HBox counter = new HBox(0);
@@ -573,7 +582,7 @@ public class LessonsController implements NavigableController {
         if (type.equals("test")) total.textProperty().bind(((TestResult)res).totalScoreProperty().asString("%.1f"));
         else total.textProperty().bind(((QuestionResult)res).totalScoreProperty().asString("%.1f"));
 
-        box.getChildren().addAll(name, secInput, counter, spacer, total);
+        box.getChildren().addAll(counter, spacer, total);
         return box;
     }
 

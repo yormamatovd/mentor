@@ -6,6 +6,7 @@ import javafx.scene.layout.BorderPane;
 import org.algo.mentor.HelloApplication;
 import org.algo.mentor.controllers.MainController;
 import org.algo.mentor.models.User;
+import org.algo.mentor.util.ScrollSpeedFix;
 
 import java.io.IOException;
 
@@ -51,6 +52,8 @@ public class NavigationController {
             FXMLLoader loader = new FXMLLoader(HelloApplication.class.getResource("views/" + fxmlFileName));
             Parent view = loader.load();
             mainLayout.setCenter(view);
+
+            ScrollSpeedFix.applyScrollSpeedFix(view);
 
             Object controller = loader.getController();
             if (controller instanceof NavigableController) {

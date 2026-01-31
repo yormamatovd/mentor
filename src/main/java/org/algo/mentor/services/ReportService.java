@@ -1,7 +1,5 @@
 package org.algo.mentor.services;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import org.algo.mentor.config.DatabaseManager;
 
 import java.sql.*;
@@ -55,7 +53,7 @@ public class ReportService {
         String query = "SELECT g.id, g.name, " +
                 "(SELECT COUNT(*) FROM student_groups WHERE group_id = g.id) as student_count, " +
                 "COALESCE((SELECT AVG(CAST(present AS DOUBLE)) * 100 FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE l.group_id = g.id), 0) as avg_att, " +
-                "COALESCE((SELECT AVG(score) FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE l.group_id = g.id), 0) as avg_score " +
+                "COALESCE((SELECT AVG(score) FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE l.group_id = g.id AND h.score IS NOT NULL), 0) as avg_score " +
                 "FROM groups g";
         
         try (Connection conn = DatabaseManager.getConnection();
@@ -80,7 +78,7 @@ public class ReportService {
         List<StudentStat> stats = new ArrayList<>();
         String query = "SELECT s.id, s.first_name || ' ' || s.last_name as full_name, " +
                 "COALESCE((SELECT AVG(CAST(present AS DOUBLE)) * 100 FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id AND l.group_id = ?), 0) as att_rate, " +
-                "COALESCE((SELECT AVG(score) FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE h.student_id = s.id AND l.group_id = ?), 0) as avg_score, " +
+                "COALESCE((SELECT AVG(score) FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE h.student_id = s.id AND l.group_id = ? AND h.score IS NOT NULL), 0) as avg_score, " +
                 "COALESCE((SELECT COUNT(*) FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id AND l.group_id = ? AND a.present = 0), 0) as missed_lessons " +
                 "FROM students s " +
                 "JOIN student_groups sg ON s.id = sg.student_id " +
@@ -115,7 +113,7 @@ public class ReportService {
     public static List<AttendanceDetail> getIndividualStudentAttendance(int studentId, int groupId) {
         List<AttendanceDetail> details = new ArrayList<>();
         String query = "SELECT l.lesson_date, a.present, " +
-                "COALESCE(h.score, 0) as hw_score, " +
+                "h.score as hw_score, " +
                 "(SELECT GROUP_CONCAT(COALESCE(qs.topic, 'Savol') || ': ' || qr.total_score, '; ') " +
                 " FROM question_sessions qs JOIN question_results qr ON qs.id = qr.question_session_id " +
                 " WHERE qs.lesson_id = l.id AND qr.student_id = a.student_id) as qs_info, " +
@@ -134,14 +132,19 @@ public class ReportService {
             pstmt.setInt(2, groupId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    double hwScore = rs.getDouble("hw_score");
+                    Double hwScore = (Double) rs.getObject("hw_score");
                     String qsInfo = rs.getString("qs_info");
                     String tsInfo = rs.getString("ts_info");
                     
                     StringBuilder breakdown = new StringBuilder();
-                    double totalScore = hwScore;
+                    double totalScore = 0;
                     
-                    breakdown.append("Uy vazifa: ").append(hwScore);
+                    if (hwScore != null) {
+                        totalScore += hwScore;
+                        breakdown.append("Uy vazifa: ").append(hwScore);
+                    } else {
+                        breakdown.append("Uy vazifa: -");
+                    }
                     
                     if (qsInfo != null && !qsInfo.isEmpty()) {
                         breakdown.append(", ").append(qsInfo);
@@ -181,7 +184,7 @@ public class ReportService {
         List<LessonStat> stats = new ArrayList<>();
         String query = "SELECT l.lesson_date, COALESCE(AVG(h.score), 0) as avg_score " +
                 "FROM lessons l " +
-                "LEFT JOIN homeworks h ON l.id = h.lesson_id " +
+                "LEFT JOIN homeworks h ON l.id = h.lesson_id AND h.score IS NOT NULL " +
                 "WHERE l.group_id = ? " +
                 "GROUP BY l.lesson_date " +
                 "ORDER BY l.lesson_date DESC";
@@ -373,7 +376,10 @@ public class ReportService {
             pstmt.setInt(2, studentId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    scores.add(new HomeworkScore(rs.getDouble("score")));
+                    double score = rs.getDouble("score");
+                    if (!rs.wasNull()) {
+                        scores.add(new HomeworkScore(score));
+                    }
                 }
             }
         } catch (SQLException e) {

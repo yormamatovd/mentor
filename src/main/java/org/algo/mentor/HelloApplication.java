@@ -7,6 +7,7 @@ import javafx.stage.Stage;
 import org.kordamp.bootstrapfx.BootstrapFX;
 import org.algo.mentor.config.AppDirectoryManager;
 import org.algo.mentor.config.DatabaseManager;
+import org.algo.mentor.util.ScrollSpeedFix;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +26,9 @@ public class HelloApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("views/main-layout.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 1100, 700);
         scene.getStylesheets().add(BootstrapFX.bootstrapFXStylesheet());
+        
+        ScrollSpeedFix.applyScrollSpeedFix(scene.getRoot());
+        
         stage.setTitle("Mentor");
         stage.setScene(scene);
         stage.setResizable(true);

@@ -98,7 +98,7 @@ public class LessonService {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         list.add(new Homework(rs.getInt("id"), rs.getInt("lesson_id"), rs.getInt("student_id"), 
-                                rs.getString("full_name"), rs.getDouble("score"), rs.getString("note")));
+                                rs.getString("full_name"), (Double) rs.getObject("score"), rs.getString("note")));
                     }
                 }
             }
@@ -237,7 +237,7 @@ public class LessonService {
             String hwSql = "UPDATE homeworks SET score = ?, note = ? WHERE id = ?";
             try (PreparedStatement hwPstmt = conn.prepareStatement(hwSql)) {
                 for (Homework h : homeworks) {
-                    hwPstmt.setDouble(1, h.getScore());
+                    hwPstmt.setObject(1, h.getScoreForDatabase());
                     hwPstmt.setString(2, h.getNote());
                     hwPstmt.setInt(3, h.getId());
                     hwPstmt.addBatch();

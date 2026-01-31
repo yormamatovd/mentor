@@ -274,12 +274,19 @@ public class StudentService {
     public static void deleteStudent(int studentId) {
         try {
             Connection conn = DatabaseManager.getConnection();
-            String query = "DELETE FROM students WHERE id = ?";
-            PreparedStatement pstmt = conn.prepareStatement(query);
-            pstmt.setInt(1, studentId);
-
-            pstmt.executeUpdate();
-            pstmt.close();
+            
+            String query1 = "DELETE FROM student_groups WHERE student_id = ?";
+            PreparedStatement pstmt1 = conn.prepareStatement(query1);
+            pstmt1.setInt(1, studentId);
+            pstmt1.executeUpdate();
+            pstmt1.close();
+            
+            String query2 = "DELETE FROM students WHERE id = ?";
+            PreparedStatement pstmt2 = conn.prepareStatement(query2);
+            pstmt2.setInt(1, studentId);
+            pstmt2.executeUpdate();
+            pstmt2.close();
+            
             logger.info("Deleted student {}", studentId);
         } catch (SQLException e) {
             logger.error("Error deleting student {}", studentId, e);
