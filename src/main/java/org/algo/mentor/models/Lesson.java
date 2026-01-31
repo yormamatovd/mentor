@@ -8,16 +8,26 @@ public class Lesson {
     private int groupId;
     private LocalDateTime lessonDate;
     private String topic;
+    private double homeworkTotalScore;
 
     public Lesson(int id, int groupId, LocalDateTime lessonDate) {
-        this(id, groupId, lessonDate, lessonDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+        this(id, groupId, lessonDate, lessonDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), 0.0);
     }
 
-    public Lesson(int id, int groupId, LocalDateTime lessonDate, String topic) {
+    public Lesson(int id, int groupId, LocalDateTime lessonDate, String topic, double homeworkTotalScore) {
         this.id = id;
         this.groupId = groupId;
         this.lessonDate = lessonDate;
         this.topic = topic;
+        this.homeworkTotalScore = homeworkTotalScore;
+    }
+
+    public double getHomeworkTotalScore() {
+        return homeworkTotalScore;
+    }
+
+    public void setHomeworkTotalScore(double homeworkTotalScore) {
+        this.homeworkTotalScore = homeworkTotalScore;
     }
 
     public String getTopic() {

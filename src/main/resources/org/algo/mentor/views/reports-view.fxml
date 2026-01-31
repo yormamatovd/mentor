@@ -83,7 +83,7 @@
                             <TableColumn fx:id="studentNameCol" text="F.I.SH" prefWidth="250"/>
                             <TableColumn fx:id="studentAttRateCol" text="Davomat (%)" prefWidth="120"/>
                             <TableColumn fx:id="studentMissedCol" text="Qoldirilgan" prefWidth="100"/>
-                            <TableColumn fx:id="studentAvgScoreCol" text="O'rtacha ball" prefWidth="120"/>
+                            <TableColumn fx:id="studentAvgScoreCol" text="O'zlashtirish" prefWidth="120"/>
                         </columns>
                     </TableView>
                 </VBox>
@@ -115,7 +115,7 @@
                     </VBox>
                     
                     <VBox GridPane.columnIndex="1" styleClass="stat-card" style="-fx-background-color: #f0fff4; -fx-padding: 20; -fx-background-radius: 10;">
-                        <Label text="O'rtacha Ball" style="-fx-text-fill: #38a169; -fx-font-size: 14;"/>
+                        <Label text="O'zlashtirish" style="-fx-text-fill: #38a169; -fx-font-size: 14;"/>
                         <Label fx:id="individualAvgScoreLabel" text="0.0" style="-fx-font-size: 32; -fx-font-weight: bold; -fx-text-fill: #276749;"/>
                     </VBox>
                     
@@ -134,7 +134,8 @@
                                     <TableColumn fx:id="attDateCol" text="Sana" prefWidth="180"/>
                                     <TableColumn fx:id="attStatusCol" text="Holati" prefWidth="120"/>
                                     <TableColumn fx:id="scoreTypeCol" text="Topsiriq" prefWidth="140"/>
-                                    <TableColumn fx:id="attScoreCol" text="Ball" prefWidth="100"/>
+                                    <TableColumn fx:id="attTotalCol" text="Jami" prefWidth="80"/>
+                                    <TableColumn fx:id="attResultCol" text="Topdi" prefWidth="80"/>
                                 </columns>
                             </TableView>
                         </VBox>

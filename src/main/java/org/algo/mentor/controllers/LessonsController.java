@@ -7,7 +7,6 @@ import javafx.animation.FadeTransition;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -345,6 +344,32 @@ public class LessonsController implements NavigableController {
         homeworkFlowPane.getChildren().clear();
         homeworks.sort((a, b) -> sortStudents(a.getStudentId(), b.getStudentId(), a.getScore(), b.getScore(), a.getStudentName(), b.getStudentName()));
 
+        // Umumiy ball kiritish (Homework Total Score)
+        HBox totalScoreBox = new HBox(15);
+        totalScoreBox.setAlignment(Pos.CENTER_LEFT);
+        totalScoreBox.setPadding(new Insets(10, 10, 15, 10));
+        totalScoreBox.setStyle("-fx-border-color: #e2e8f0; -fx-border-width: 0 0 1 0; -fx-margin: 0 0 10 0;");
+        totalScoreBox.setPrefWidth(1100); // FlowPane kengligiga moslash
+
+        Label totalLabel = new Label("UYGA VAZIFA UCHUN UMUMIY BALL:");
+        totalLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #475569;");
+
+        TextField totalInput = new TextField(String.valueOf(currentLesson.getHomeworkTotalScore()));
+        totalInput.setPromptText("Masalan: 100");
+        totalInput.getStyleClass().add("input-medium");
+        totalInput.setPrefWidth(100);
+        totalInput.setDisable(!isEditing);
+        totalInput.textProperty().addListener((obs, old, newVal) -> {
+            try {
+                double val = newVal.isEmpty() ? 0.0 : Double.parseDouble(newVal);
+                currentLesson.setHomeworkTotalScore(val);
+                triggerAutoSave();
+            } catch (NumberFormatException ignored) {}
+        });
+
+        totalScoreBox.getChildren().addAll(totalLabel, totalInput);
+        homeworkFlowPane.getChildren().add(totalScoreBox);
+
         for (Homework hw : homeworks) {
             HBox box = new HBox(10);
             box.setAlignment(Pos.CENTER_LEFT);
@@ -368,7 +393,14 @@ public class LessonsController implements NavigableController {
                     if (newVal.isEmpty()) {
                         hw.clearScore();
                     } else {
-                        hw.setScore(Double.parseDouble(newVal));
+                        double val = Double.parseDouble(newVal);
+                        double total = currentLesson.getHomeworkTotalScore();
+                        if (total > 0 && val > total) {
+                            scoreInput.setText(old);
+                            showError("Ball umumiy balldan katta bo'lishi mumkin emas!");
+                            return;
+                        }
+                        hw.setScore(val);
                     }
                     triggerAutoSave();
                 } catch (NumberFormatException ignored) {}
@@ -421,7 +453,6 @@ public class LessonsController implements NavigableController {
         
         String title = (type.equals("test") ? "Test-" : "Savol-") + index;
         String topic = type.equals("test") ? ((TestSession)sessionObj).getTopic() : ((QuestionSession)sessionObj).getTopic();
-        double point = type.equals("test") ? ((TestSession)sessionObj).getPointPerCorrect() : ((QuestionSession)sessionObj).getPointPerCorrect();
 
         HBox header = new HBox(15);
         header.setAlignment(Pos.CENTER_LEFT);
@@ -431,7 +462,7 @@ public class LessonsController implements NavigableController {
         TextField topicInput = new TextField(topic != null ? topic : "");
         topicInput.setPromptText("Mavzu");
         topicInput.getStyleClass().add("group-topic-field");
-        topicInput.setPrefWidth(300);
+        topicInput.setPrefWidth(250);
         topicInput.setDisable(!isEditing);
         topicInput.textProperty().addListener((obs, old, newVal) -> {
             if (type.equals("test")) ((TestSession)sessionObj).setTopic(newVal);
@@ -439,22 +470,35 @@ public class LessonsController implements NavigableController {
             triggerAutoSave();
         });
 
-        Label pointLbl = new Label("1 ta to'g'ri =");
-        TextField pointInput = new TextField(String.valueOf(point));
-        pointInput.getStyleClass().add("input-small");
-        pointInput.setPrefWidth(70);
-        pointInput.setDisable(!isEditing);
-        pointInput.textProperty().addListener((obs, old, newVal) -> {
+        int totalQCount = type.equals("test") ? ((TestSession)sessionObj).getTotalQuestions() : ((QuestionSession)sessionObj).getTotalQuestions();
+        TextField totalQuestionsInput = new TextField(String.valueOf(totalQCount));
+        totalQuestionsInput.getStyleClass().add("input-small");
+        totalQuestionsInput.setPrefWidth(60);
+        totalQuestionsInput.setDisable(!isEditing);
+        totalQuestionsInput.textProperty().addListener((obs, old, newVal) -> {
             try {
-                double p = newVal.isEmpty() ? 0.0 : Double.parseDouble(newVal);
-                if (type.equals("test")) ((TestSession)sessionObj).setPointPerCorrect(p);
-                else ((QuestionSession)sessionObj).setPointPerCorrect(p);
-                recalculateSession(sessionObj, type);
+                int count = newVal.isEmpty() ? 0 : Integer.parseInt(newVal);
+                if (type.equals("test")) ((TestSession)sessionObj).setTotalQuestions(count);
+                else ((QuestionSession)sessionObj).setTotalQuestions(count);
                 triggerAutoSave();
             } catch (Exception ignored) {}
         });
 
-        header.getChildren().addAll(titleLbl, topicInput, pointLbl, pointInput);
+        header.getChildren().clear();
+        header.getChildren().add(titleLbl);
+        header.getChildren().add(topicInput);
+        
+        Label jamiLbl = new Label("Jami:");
+        jamiLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: #475569; -fx-font-size: 14px;");
+        jamiLbl.setMinWidth(Region.USE_PREF_SIZE);
+        
+        header.getChildren().add(jamiLbl);
+        header.getChildren().add(totalQuestionsInput);
+
+        HBox.setHgrow(titleLbl, Priority.NEVER);
+        HBox.setHgrow(topicInput, Priority.NEVER);
+        HBox.setHgrow(jamiLbl, Priority.NEVER);
+        HBox.setHgrow(totalQuestionsInput, Priority.NEVER);
 
         if (isEditing) {
             Region spacer = new Region();
@@ -557,6 +601,11 @@ public class LessonsController implements NavigableController {
         plus.setOnAction(e -> {
             try {
                 int c = Integer.parseInt(countVal.getText());
+                int totalQ = type.equals("test") ? ((TestSession)session).getTotalQuestions() : ((QuestionSession)session).getTotalQuestions();
+                if (totalQ > 0 && c >= totalQ) {
+                    showError("To'g'ri javoblar soni jami savollardan ko'p bo'lishi mumkin emas!");
+                    return;
+                }
                 updateCount(res, type, session, c + 1, countVal);
             } catch (Exception ignored) {}
         });
@@ -564,6 +613,12 @@ public class LessonsController implements NavigableController {
             try {
                 if (!newVal.isEmpty()) {
                     int c = Integer.parseInt(newVal);
+                    int totalQ = type.equals("test") ? ((TestSession)session).getTotalQuestions() : ((QuestionSession)session).getTotalQuestions();
+                    if (totalQ > 0 && c > totalQ) {
+                        countVal.setText(old);
+                        showError("To'g'ri javoblar soni jami savollardan ko'p bo'lishi mumkin emas!");
+                        return;
+                    }
                     updateCount(res, type, session, c, null);
                 }
             } catch (Exception ignored) {}
@@ -588,7 +643,7 @@ public class LessonsController implements NavigableController {
 
     private void updateCount(Object res, String type, Object session, int newCount, TextField field) {
         if (field != null) field.setText(String.valueOf(newCount));
-        double point = type.equals("test") ? ((TestSession)session).getPointPerCorrect() : ((QuestionSession)session).getPointPerCorrect();
+        double point = 1.0;
         if (type.equals("test")) {
             ((TestResult)res).setCorrectCount(newCount);
             ((TestResult)res).setTotalScore(newCount * point);
@@ -600,7 +655,7 @@ public class LessonsController implements NavigableController {
     }
 
     private void recalculateSession(Object session, String type) {
-        double point = type.equals("test") ? ((TestSession)session).getPointPerCorrect() : ((QuestionSession)session).getPointPerCorrect();
+        double point = 1.0;
         List<?> results = type.equals("test") ? ((TestSession)session).getResults() : ((QuestionSession)session).getResults();
         for (Object r : results) {
             if (type.equals("test")) ((TestResult)r).setTotalScore(((TestResult)r).getCorrectCount() * point);
@@ -690,6 +745,18 @@ public class LessonsController implements NavigableController {
         ft.play();
     }
 
+    private void showError(String message) {
+        statusLabel.setText(message);
+        statusLabel.setStyle("-fx-text-fill: #ef4444;");
+        // 3 soniyadan keyin eski holatga qaytarish
+        new Timeline(new KeyFrame(Duration.seconds(3), e -> {
+            if (statusLabel.getText().equals(message)) {
+                statusLabel.setText("Barcha o'zgarishlar saqlandi");
+                statusLabel.setStyle("-fx-text-fill: #10b981;");
+            }
+        })).play();
+    }
+
     /**
      * Avto-saqlashni boshlash
      */
@@ -704,7 +771,8 @@ public class LessonsController implements NavigableController {
      * Ma'lumotlarni DB ga yozish
      */
     private void performAutoSave() {
-        LessonService.saveAllData(attendances, homeworks, testSessions, questionSessions);
+        if (currentLesson == null) return;
+        LessonService.saveAllData(currentLesson, attendances, homeworks, testSessions, questionSessions);
         
         Platform.runLater(() -> {
             statusLabel.setText("Barcha o'zgarishlar saqlandi");
@@ -725,14 +793,18 @@ public class LessonsController implements NavigableController {
     }
 
     @FXML private void onBackToGroups() {
-        performAutoSave(); // Chiqishdan oldin saqlash
+        if (currentLesson != null) {
+            performAutoSave(); // Chiqishdan oldin saqlash
+        }
         lessonDetailView.setVisible(false);
         lessonHistoryView.setVisible(false);
         groupSelectionView.setVisible(true);
         loadGroups();
     }
     @FXML private void onBackToHistoryOrGroups() {
-        performAutoSave(); // Chiqishdan oldin saqlash
+        if (currentLesson != null) {
+            performAutoSave(); // Chiqishdan oldin saqlash
+        }
         if (fromHistory) { lessonDetailView.setVisible(false); lessonHistoryView.setVisible(true); loadHistory(); }
         else onBackToGroups();
     }
@@ -761,6 +833,7 @@ public class LessonsController implements NavigableController {
     @FXML
     private void onDeleteLesson() {
         LessonService.deleteLesson(currentLesson.getId());
+        currentLesson = null;
         onBackToHistoryOrGroups();
     }
 

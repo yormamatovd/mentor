@@ -10,17 +10,21 @@ public class TestSession {
     private int id;
     private int lessonId;
     private String topic;
-    private double pointPerCorrect;
+    private double pointPerCorrect = 1.0;
+    private int totalQuestions;
     private List<TestResult> results = new ArrayList<>();
 
     public TestSession() {}
 
-    public TestSession(int id, int lessonId, String topic, double pointPerCorrect) {
+    public TestSession(int id, int lessonId, String topic, int totalQuestions) {
         this.id = id;
         this.lessonId = lessonId;
         this.topic = topic;
-        this.pointPerCorrect = pointPerCorrect;
+        this.totalQuestions = totalQuestions;
     }
+
+    public int getTotalQuestions() { return totalQuestions; }
+    public void setTotalQuestions(int totalQuestions) { this.totalQuestions = totalQuestions; }
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }

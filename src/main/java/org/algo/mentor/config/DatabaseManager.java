@@ -18,7 +18,7 @@ public class DatabaseManager {
             connection = DriverManager.getConnection(databaseUrl);
             logger.info("Database connection established successfully");
             createTables();
-//            initializeSampleData();
+            updateSchema();
             logger.info("Database initialized successfully");
         } catch (ClassNotFoundException e) {
             logger.error("SQLite JDBC driver not found in classpath", e);
@@ -29,6 +29,30 @@ public class DatabaseManager {
         } catch (Exception e) {
             logger.error("Unexpected error during database initialization", e);
             throw new RuntimeException("Failed to initialize database", e);
+        }
+    }
+
+    private static void updateSchema() {
+        try (Statement stmt = connection.createStatement()) {
+            // Add columns if they don't exist
+            addColumnIfNotExists(stmt, "lessons", "homework_total_score", "REAL DEFAULT 0");
+            addColumnIfNotExists(stmt, "test_sessions", "total_questions", "INTEGER DEFAULT 0");
+            addColumnIfNotExists(stmt, "question_sessions", "total_questions", "INTEGER DEFAULT 0");
+        } catch (SQLException e) {
+            logger.error("Failed to update database schema", e);
+        }
+    }
+
+    private static void addColumnIfNotExists(Statement stmt, String table, String column, String type) {
+        try {
+            stmt.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + type);
+            logger.info("Added column {} to table {}", column, table);
+        } catch (SQLException e) {
+            if (e.getMessage().contains("duplicate column name")) {
+                logger.debug("Column {} already exists in table {}", column, table);
+            } else {
+                logger.error("Error adding column {} to table {}", column, table, e);
+            }
         }
     }
 
@@ -82,6 +106,7 @@ public class DatabaseManager {
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "group_id INTEGER NOT NULL," +
                     "lesson_date TEXT NOT NULL," +
+                    "homework_total_score REAL DEFAULT 0," +
                     "FOREIGN KEY(group_id) REFERENCES groups(id)" +
                     ")");
 
@@ -110,7 +135,7 @@ public class DatabaseManager {
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "lesson_id INTEGER NOT NULL," +
                     "topic TEXT," +
-                    "point_per_correct REAL DEFAULT 2.0," +
+                    "total_questions INTEGER DEFAULT 0," +
                     "FOREIGN KEY(lesson_id) REFERENCES lessons(id)" +
                     ")");
 
@@ -130,7 +155,7 @@ public class DatabaseManager {
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "lesson_id INTEGER NOT NULL," +
                     "topic TEXT," +
-                    "point_per_correct REAL DEFAULT 2.0," +
+                    "total_questions INTEGER DEFAULT 0," +
                     "FOREIGN KEY(lesson_id) REFERENCES lessons(id)" +
                     ")");
 

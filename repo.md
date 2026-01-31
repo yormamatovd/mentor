@@ -25,7 +25,7 @@ mentor/
 │   ├── icon.svg                        # Source icon design
 │   ├── icon.icns                       # macOS app icon
 │   ├── icon.ico                        # Windows app icon
-│   ├── icon.png                        # PNG icon (11.79 KB)
+│   ├── icon.png                        # PNG icon
 │   ├── generate-icon.sh                # Icon generation script (macOS/Linux)
 │   ├── main.wxs.backup                 # WiX installer configuration backup
 │   ├── README.md                       # Build resources documentation
@@ -34,7 +34,7 @@ mentor/
 ├── build-scripts/                      # Build automation scripts
 │   ├── build.sh                        # Main build orchestrator (macOS)
 │   ├── build-mac.sh                    # macOS .app and .dmg builder
-│   ├── build-windows.ps1               # Windows .exe builder
+│   ├── build-windows.ps1               # Windows .msi builder
 │   └── README.md                       # Build system documentation
 │
 ├── src/
@@ -59,7 +59,7 @@ mentor/
 │       │       │   ├── NavigableController.java
 │       │       │   └── NavigationController.java
 │       │       │
-│       │       ├── models/             # Data models (14 entities)
+│       │       ├── models/             # Data models (13 entities)
 │       │       │   ├── Attendance.java
 │       │       │   ├── Group.java
 │       │       │   ├── Homework.java
@@ -90,7 +90,7 @@ mentor/
 │       └── resources/
 │           ├── org/algo/mentor/
 │           │   ├── styles/
-│           │   │   └── custom.css           # Application styling (12.09 KB)
+│           │   │   └── custom.css           # Application styling
 │           │   │
 │           │   ├── views/                   # FXML layout files (10 views)
 │           │   │   ├── dashboard-view.fxml
@@ -113,12 +113,12 @@ mentor/
 │
 ├── target/                                  # Build output directory
 │   ├── mentor-1.0.0.jar                    # Application JAR
-│   ├── libs/                               # Dependencies (36 JARs)
+│   ├── libs/                               # Dependencies
 │   ├── jpackage-input/                     # Staging for native builds
 │   └── installer/                          # Native installers
 │       ├── Mentor.app                      # macOS app bundle
 │       ├── Mentor-1.0.0.dmg                # macOS disk image installer
-│       └── Mentor-1.0.0.exe                # Windows installer
+│       └── Mentor-1.0.0.msi                # Windows MSI installer
 │
 ├── mentor.db                               # SQLite database file
 ├── pom.xml                                 # Maven project configuration
@@ -134,7 +134,7 @@ mentor/
 ### Application Entry Points
 
 #### HelloApplication
-- **File**: `src/main/java/org/algo/mentor/HelloApplication.java:15`
+- **File**: `src/main/java/org/algo/mentor/HelloApplication.java`
 - **Purpose**: Main JavaFX application class
 - **Responsibilities**:
   - Initializes `DatabaseManager` for database connectivity
@@ -406,7 +406,7 @@ The project includes a complete build system for creating native installers with
 
 #### Features
 ✅ **Embedded JRE** - End users don't need Java installed  
-✅ **Native installers** - Platform-specific .app/.dmg/.exe  
+✅ **Native installers** - Platform-specific .app/.dmg/.msi  
 ✅ **GitHub Actions** - Automated Windows builds  
 ✅ **Custom icons** - Professional branding  
 ✅ **Desktop shortcuts** - Automatic shortcut creation  
@@ -415,18 +415,18 @@ The project includes a complete build system for creating native installers with
 #### Build Scripts
 - **`build-scripts/build.sh`**: Main orchestrator (macOS)
 - **`build-scripts/build-mac.sh`**: macOS .app and .dmg builder
-- **`build-scripts/build-windows.ps1`**: Windows installer builder
+- **`build-scripts/build-windows.ps1`**: Windows installer builder (MSI)
 - **`.github/workflows/windows-build.yml`**: GitHub Actions workflow
 
 #### Installer Output
 - **macOS**: `target/installer/Mentor.app` and `Mentor-1.0.0.dmg`
-- **Windows**: `target/installer/Mentor-1.0.0.exe`
+- **Windows**: `target/installer/Mentor-1.0.0.msi`
 
 #### File Sizes
 - JAR only: ~5 MB
 - macOS .app: ~200 MB (includes JRE)
 - macOS .dmg: ~100 MB (compressed)
-- Windows .exe: ~120 MB (compressed, includes JRE)
+- Windows .msi: ~120 MB (compressed, includes JRE)
 
 See `BUILD_SYSTEM.md` for complete build system documentation.
 
@@ -608,6 +608,6 @@ For questions, issues, or contributions, please contact the project maintainer.
 
 ---
 
-**Last Updated**: January 29, 2026  
+**Last Updated**: January 31, 2026  
 **Version**: 1.0.0  
 **Status**: Production Ready

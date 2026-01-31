@@ -3,8 +3,6 @@ package org.algo.mentor.services;
 import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
-import com.itextpdf.kernel.font.PdfFont;
-import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
@@ -88,13 +86,14 @@ public class PdfExportService {
 
         // Detailed Table
         document.add(new Paragraph("\nDarslar bo'yicha batafsil:").setBold().setFontSize(14));
-        Table detailsTable = new Table(UnitValue.createPercentArray(new float[]{1.5f, 1.2f, 1.2f, 1}));
+        Table detailsTable = new Table(UnitValue.createPercentArray(new float[]{1.5f, 1.2f, 1.2f, 0.8f, 0.8f}));
         detailsTable.setWidth(UnitValue.createPercentValue(100));
 
         detailsTable.addHeaderCell(createHeaderCell("Sana"));
         detailsTable.addHeaderCell(createHeaderCell("Holati"));
         detailsTable.addHeaderCell(createHeaderCell("Topshiriq"));
-        detailsTable.addHeaderCell(createHeaderCell("Ball"));
+        detailsTable.addHeaderCell(createHeaderCell("Jami"));
+        detailsTable.addHeaderCell(createHeaderCell("Topdi"));
 
         String previousDateTime = null;
         boolean isLightRow = false;
@@ -120,8 +119,12 @@ public class PdfExportService {
             detailsTable.addCell(statusCell);
             
             detailsTable.addCell(new Cell().add(new Paragraph(row.scoreType())).setFontSize(9).setBackgroundColor(rowColor));
-            String scoreText = row.score() == null ? "-" : String.format("%.1f", row.score());
-            detailsTable.addCell(new Cell().add(new Paragraph(scoreText)).setFontSize(9).setBackgroundColor(rowColor));
+            
+            String totalText = (row.totalValue() != null && row.totalValue() > 0) ? String.format("%.1f", row.totalValue()) : "-";
+            String resultText = row.score() == null ? "-" : String.format("%.1f", row.score());
+
+            detailsTable.addCell(new Cell().add(new Paragraph(totalText)).setFontSize(9).setBackgroundColor(rowColor));
+            detailsTable.addCell(new Cell().add(new Paragraph(resultText)).setFontSize(9).setBackgroundColor(rowColor));
         }
 
         document.add(detailsTable);

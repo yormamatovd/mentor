@@ -1,15 +1,11 @@
 package org.algo.mentor.controllers;
 
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.WritableImage;
 import javafx.scene.SnapshotParameters;
 import javafx.stage.FileChooser;
@@ -58,7 +54,8 @@ public class ReportsController implements NavigableController {
     @FXML private TableColumn<ReportService.LessonScoreRow, String> attDateCol;
     @FXML private TableColumn<ReportService.LessonScoreRow, String> attStatusCol;
     @FXML private TableColumn<ReportService.LessonScoreRow, String> scoreTypeCol;
-    @FXML private TableColumn<ReportService.LessonScoreRow, Double> attScoreCol;
+    @FXML private TableColumn<ReportService.LessonScoreRow, Double> attTotalCol;
+    @FXML private TableColumn<ReportService.LessonScoreRow, Double> attResultCol;
     @FXML private PieChart individualAttendancePie;
     @FXML private LineChart<String, Number> performanceChart;
     @FXML private Button exportPersonalPdfBtn;
@@ -147,7 +144,7 @@ public class ReportsController implements NavigableController {
         groupAvgScoreCol.setCellFactory(tc -> new TableCell<>() {
             @Override protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty ? null : String.format("%.1f", item));
+                setText(empty ? null : String.format("%.1f%%", item));
             }
         });
     }
@@ -168,7 +165,7 @@ public class ReportsController implements NavigableController {
         studentAvgScoreCol.setCellFactory(tc -> new TableCell<>() {
             @Override protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty ? null : String.format("%.1f", item));
+                setText(empty ? null : String.format("%.1f%%", item));
             }
         });
     }
@@ -190,7 +187,8 @@ public class ReportsController implements NavigableController {
         
         attStatusCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().status()));
         scoreTypeCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().scoreType()));
-        attScoreCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().score()));
+        attTotalCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().totalValue()));
+        attResultCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().score()));
         
         attStatusCol.setCellFactory(tc -> new TableCell<>() {
             @Override protected void updateItem(String item, boolean empty) {
@@ -206,10 +204,19 @@ public class ReportsController implements NavigableController {
             }
         });
         
-        attScoreCol.setCellFactory(tc -> new TableCell<>() {
+        attTotalCol.setCellFactory(tc -> new TableCell<>() {
             @Override protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty || item == null ? "-" : String.format("%.1f", item));
+                if (empty || item == null || item <= 0) setText("-");
+                else setText(String.format("%.1f", item));
+            }
+        });
+
+        attResultCol.setCellFactory(tc -> new TableCell<>() {
+            @Override protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) setText("-");
+                else setText(String.format("%.1f", item));
             }
         });
         
@@ -326,6 +333,7 @@ public class ReportsController implements NavigableController {
             // Filter last 1 year
             LocalDate oneYearAgo = LocalDate.now().minusYears(1);
             List<ReportService.DetailedLessonScore> details = allDetails.stream()
+                    .filter(d -> d.totalValue() > 0)
                     .filter(d -> {
                         try {
                             return LocalDate.parse(d.date()).isAfter(oneYearAgo);
@@ -350,11 +358,14 @@ public class ReportsController implements NavigableController {
             individualAttTable.setItems(FXCollections.observableArrayList(rows));
             
             // Calculate summaries
-            double avgScore = details.stream().mapToDouble(ReportService.DetailedLessonScore::totalScore).average().orElse(0.0);
+            double totalEarned = details.stream().mapToDouble(ReportService.DetailedLessonScore::totalScore).sum();
+            double totalPossible = details.stream().mapToDouble(ReportService.DetailedLessonScore::totalValue).sum();
+            double avgScore = totalPossible == 0 ? 0 : (totalEarned / totalPossible) * 100;
+            
             long presentCount = details.stream().filter(ReportService.DetailedLessonScore::present).count();
             double attRate = details.isEmpty() ? 0 : (double) presentCount / details.size() * 100;
             
-            individualAvgScoreLabel.setText(String.format("%.1f", avgScore));
+            individualAvgScoreLabel.setText(String.format("%.1f%%", avgScore));
             individualAttRateLabel.setText(String.format("%.0f%%", attRate));
             
             // Attendance Pie Chart
@@ -378,31 +389,28 @@ public class ReportsController implements NavigableController {
             XYChart.Series<String, Number> studentSeries = new XYChart.Series<>();
             studentSeries.setName("O'quvchi");
             
-            XYChart.Series<String, Number> groupSeries = new XYChart.Series<>();
-            groupSeries.setName("Guruh o'rtachasi");
+            XYChart.Series<String, Number> totalSeries = new XYChart.Series<>();
+            totalSeries.setName("Jami");
 
             // Take last 10 lessons for the chart
             int limit = Math.min(details.size(), 10);
             
-            // Get group statistics for the same dates
-            List<ReportService.LessonStat> groupLessonStats = ReportService.getGroupLessonStatistics(groupId);
-
             for (int i = limit - 1; i >= 0; i--) {
                 ReportService.DetailedLessonScore d = details.get(i);
-                // Format date as dd.MM (from yyyy-MM-dd)
-                String dateLabel = d.date().substring(8, 10) + "." + d.date().substring(5, 7);
+                // Format date as dd.MM HH:mm
+                String dateLabel;
+                if (d.date() != null && d.date().length() >= 16) {
+                    dateLabel = d.date().substring(8, 10) + "." + d.date().substring(5, 7) + " " + d.date().substring(11, 16);
+                } else if (d.date() != null && d.date().length() >= 10) {
+                    dateLabel = d.date().substring(8, 10) + "." + d.date().substring(5, 7);
+                } else {
+                    dateLabel = d.date();
+                }
                 studentSeries.getData().add(new XYChart.Data<>(dateLabel, d.totalScore()));
-                
-                // Find group average for this date
-                double groupAvg = groupLessonStats.stream()
-                        .filter(gs -> gs.date().equals(d.date()))
-                        .findFirst()
-                        .map(ReportService.LessonStat::avgScore)
-                        .orElse(0.0);
-                groupSeries.getData().add(new XYChart.Data<>(dateLabel, groupAvg));
+                totalSeries.getData().add(new XYChart.Data<>(dateLabel, d.totalValue()));
             }
             
-            performanceChart.getData().addAll(studentSeries, groupSeries);
+            performanceChart.getData().addAll(studentSeries, totalSeries);
         }
     }
 

@@ -142,13 +142,75 @@ Install the generated MSI and verify:
    - Verify desktop and Start Menu shortcuts are created
    - Test application launches correctly
 
+### 7. ✅ Lesson Performance Tracking - Total Values
+**Files**: `LessonsController.java`, `LessonService.java`, `DatabaseManager.java`, `Lesson.java`, `TestSession.java`, `QuestionSession.java`
+**Changes**:
+- Added `homework_total_score` to `Lesson` model and database.
+- Added `total_questions` to `TestSession` and `QuestionSession` models and database.
+- Implemented UI inputs for total values at the top of homework, test, and question blocks in `LessonsController`.
+- Added real-time validation to prevent student scores or correct counts from exceeding the specified totals.
+- Implemented error reporting mechanism in the lesson view status bar.
+
+### 8. ✅ Navigation NullPointerException Fix
+**File**: `src/main/java/org/algo/mentor/controllers/LessonsController.java`
+**Changes**:
+- Added null checks for `currentLesson` in `onBackToGroups`, `onBackToHistoryOrGroups`, and `performAutoSave`.
+- Fixed `onDeleteLesson` to clear `currentLesson` reference before navigating back.
+- This prevents application crashes when navigating between views during the auto-save cycle or after deleting a lesson.
+
+### 9. ✅ Default Test/Question Score Update
+**Files**: `DatabaseManager.java`, `LessonService.java`, `lesson-detail-view.fxml`
+**Change**: Updated default score for correct answers from 2.0 to 1.0.
+- Modified `CREATE TABLE` statements for `test_sessions` and `question_sessions`.
+- Updated `createTestSession` and `createQuestionSession` in `LessonService`.
+- Adjusted mock data in `lesson-detail-view.fxml` to reflect the new default.
+
+### 10. ✅ UI Label Update - Total Questions
+**File**: `src/main/java/org/algo/mentor/controllers/LessonsController.java`
+**Change**: Updated "Savollar soni:" label to "Jami:" for test and question session blocks to provide a more concise UI.
+
+### 11. ✅ Dual-Value Representation in Student Reports
+**Files**: `ReportService.java`, `ReportsController.java`, `PdfExportService.java`
+**Changes**:
+- Updated `ReportService` to fetch and store baseline totals for homework (max points), tests (question count), and question sessions.
+- Modified `LessonScoreRow` and `DetailedLessonScore` records to include `totalValue` fields.
+- Updated `ReportsController` to display scores as "Result / Total" in the individual attendance table (e.g., "8.0 / 10.0").
+- Updated `PdfExportService` to include the same "Result / Total" format in exported PDF reports.
+- This provides better context for educational analytics, showing not just the student's score but also the session's maximum possible value.
+
+### 12. ✅ Removed "Point Per Correct" Configuration
+**Files**: `LessonsController.java`, `LessonService.java`, `DatabaseManager.java`, `TestSession.java`, `QuestionSession.java`
+**Changes**:
+- Removed "1 ta to'g'ri =" label and input from the lesson detail view.
+- Hardcoded the multiplier to 1.0 for all test and question sessions, simplifying the scoring logic.
+- Removed `point_per_correct` column from `test_sessions` and `question_sessions` tables in the database schema.
+- Updated database queries (SELECT, INSERT, UPDATE) to remove references to the deleted column.
+- Simplified `TestSession` and `QuestionSession` models by removing the configuration field from constructors.
+
+### 13. ✅ Split "Ball" Column in Reports and PDF
+**Files**: `reports-view.fxml`, `ReportsController.java`, `PdfExportService.java`
+**Changes**:
+- Split the single "Ball" column into two distinct columns: **"Jami"** (Total) and **"Topdi"** (Found/Result).
+- This change applies to both the JavaFX UI in the "Shaxsiy statistika" tab and the generated PDF reports.
+- Updated column widths and formatting to ensure clear separation between the maximum possible points and the student's actual score.
+
 ## Files Modified
 
 1. `src/main/resources/org/algo/mentor/views/students-view.fxml`
 2. `src/main/java/org/algo/mentor/controllers/GroupsController.java`
 3. `src/main/java/org/algo/mentor/HelloApplication.java`
-4. `build-scripts/build-windows.ps1`
-5. `.github/workflows/windows-build.yml`
+4. `src/main/java/org/algo/mentor/controllers/LessonsController.java`
+5. `src/main/java/org/algo/mentor/services/LessonService.java`
+6. `src/main/java/org/algo/mentor/config/DatabaseManager.java`
+7. `src/main/java/org/algo/mentor/models/Lesson.java`
+8. `src/main/java/org/algo/mentor/models/TestSession.java`
+9. `src/main/java/org/algo/mentor/models/QuestionSession.java`
+10. `build-scripts/build-windows.ps1`
+11. `.github/workflows/windows-build.yml`
+12. `src/main/java/org/algo/mentor/services/ReportService.java`
+13. `src/main/java/org/algo/mentor/controllers/ReportsController.java`
+14. `src/main/java/org/algo/mentor/services/PdfExportService.java`
+15. `src/main/resources/org/algo/mentor/views/reports-view.fxml`
 
 ## Files Created
 

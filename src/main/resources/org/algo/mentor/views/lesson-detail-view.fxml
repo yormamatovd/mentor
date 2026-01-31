@@ -3,9 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Text?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
-
 <ScrollPane fitToWidth="true" style="-fx-background-color: #f1f5f9;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
     <content>
         <VBox spacing="30.0" styleClass="card" stylesheets="@../styles/custom.css">
@@ -71,7 +69,7 @@
                                                         <Label prefWidth="250.0" styleClass="student-name" text="Eshnazarov Shoxrux" />
                                                         <TextField promptText="Variant" styleClass="input-medium" text="A" />
                                                         <TextField promptText="0" styleClass="input-small" text="16" />
-                                                        <Label styleClass="score-label" text="32.0" />
+                                                        <Label styleClass="score-label" text="16.0" />
                                                     </children>
                                                 </HBox>
                                                 
@@ -81,7 +79,7 @@
                                                         <Label prefWidth="250.0" styleClass="student-name" text="Karimova Dilnoza" />
                                                         <TextField promptText="Variant" styleClass="input-medium" text="B" />
                                                         <TextField promptText="0" styleClass="input-small" text="18" />
-                                                        <Label styleClass="score-label" text="36.0" />
+                                                        <Label styleClass="score-label" text="18.0" />
                                                     </children>
                                                 </HBox>
                                             </children>

@@ -126,10 +126,10 @@ public class DashboardController implements NavigableController {
 
             VBox statBox = new VBox(2);
             statBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
-            Label attLbl = new Label(String.format("%.0f%%", student.missedRate()));
-            attLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: " + (student.missedRate() > 30 ? "#e53e3e" : "#dd6b20") + ";");
-            Label scoreLbl = new Label(String.format("%.1f ball", student.avgScore()));
-            scoreLbl.setStyle("-fx-font-size: 11; -fx-text-fill: #718096;");
+            Label attLbl = new Label(String.format("Davomat: %.0f%%", student.attendanceRate()));
+            attLbl.setStyle("-fx-font-weight: bold; -fx-text-fill: " + (student.attendanceRate() < 30 ? "#e53e3e" : "#dd6b20") + ";");
+            Label scoreLbl = new Label(String.format("O'zlashtirish: %.0f%%", student.performanceRate()));
+            scoreLbl.setStyle("-fx-font-size: 11; -fx-font-weight: bold; -fx-text-fill: " + (student.performanceRate() < 30 ? "#e53e3e" : "#dd6b20") + ";");
             statBox.getChildren().addAll(attLbl, scoreLbl);
 
             HBox.setHgrow(infoBox, Priority.ALWAYS);

@@ -14,15 +14,15 @@ public class ReportService {
     public record LessonStat(String date, double avgScore) {}
     public record SummaryStat(int totalStudents, int totalGroups, int lessonsToday) {}
     public record UpcomingLesson(int id, String groupName, String time) {}
-    public record RiskStudent(int id, String fullName, double missedRate, double avgScore, String groupName) {}
+    public record RiskStudent(int id, String fullName, double attendanceRate, double performanceRate, String groupName) {}
     
-    public record TestScore(String topic, double score) {}
-    public record HomeworkScore(double score) {}
-    public record QuestionScore(String topic, double score) {}
+    public record TestScore(String topic, double score, int total) {}
+    public record HomeworkScore(double score, double total) {}
+    public record QuestionScore(String topic, double score, int total) {}
     public record DetailedLessonScore(String date, boolean present, 
-            List<TestScore> tests, List<HomeworkScore> homeworks, List<QuestionScore> questions, double totalScore) {}
+            List<TestScore> tests, List<HomeworkScore> homeworks, List<QuestionScore> questions, double totalScore, double totalValue) {}
     
-    public record LessonScoreRow(String date, String status, String scoreType, String topic, Double score) {}
+    public record LessonScoreRow(String date, String status, String scoreType, String topic, Double score, Double totalValue) {}
 
     public static SummaryStat getSummaryStatistics() {
         int students = 0, groups = 0, lessons = 0;
@@ -53,7 +53,16 @@ public class ReportService {
         String query = "SELECT g.id, g.name, " +
                 "(SELECT COUNT(*) FROM student_groups WHERE group_id = g.id) as student_count, " +
                 "COALESCE((SELECT AVG(CAST(present AS DOUBLE)) * 100 FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE l.group_id = g.id), 0) as avg_att, " +
-                "COALESCE((SELECT AVG(score) FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE l.group_id = g.id AND h.score IS NOT NULL), 0) as avg_score " +
+                "COALESCE((" +
+                "  (COALESCE((SELECT SUM(h.score) FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE l.group_id = g.id), 0) + " +
+                "   COALESCE((SELECT SUM(tr.total_score) FROM test_results tr JOIN test_sessions ts ON tr.test_session_id = ts.id JOIN lessons l ON ts.lesson_id = l.id WHERE l.group_id = g.id), 0) + " +
+                "   COALESCE((SELECT SUM(qr.total_score) FROM question_results qr JOIN question_sessions qs ON qr.question_session_id = qs.id JOIN lessons l ON qs.lesson_id = l.id WHERE l.group_id = g.id), 0)" +
+                "  ) * 100.0 / NULLIF(" +
+                "   COALESCE((SELECT SUM(l.homework_total_score) FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE l.group_id = g.id), 0) + " +
+                "   COALESCE((SELECT SUM(ts.total_questions) FROM test_results tr JOIN test_sessions ts ON tr.test_session_id = ts.id JOIN lessons l ON ts.lesson_id = l.id WHERE l.group_id = g.id), 0) + " +
+                "   COALESCE((SELECT SUM(qs.total_questions) FROM question_results qr JOIN question_sessions qs ON qr.question_session_id = qs.id JOIN lessons l ON qs.lesson_id = l.id WHERE l.group_id = g.id), 0)" +
+                "  , 0)" +
+                "), 0) as avg_score " +
                 "FROM groups g";
         
         try (Connection conn = DatabaseManager.getConnection();
@@ -78,7 +87,15 @@ public class ReportService {
         List<StudentStat> stats = new ArrayList<>();
         String query = "SELECT s.id, s.first_name || ' ' || s.last_name as full_name, " +
                 "COALESCE((SELECT AVG(CAST(present AS DOUBLE)) * 100 FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id AND l.group_id = ?), 0) as att_rate, " +
-                "COALESCE((SELECT AVG(score) FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE h.student_id = s.id AND l.group_id = ? AND h.score IS NOT NULL), 0) as avg_score, " +
+                "COALESCE(" +
+                " (SELECT (SUM(earned) * 100.0 / NULLIF(SUM(total), 0)) FROM (" +
+                "   SELECT SUM(h.score) as earned, SUM(l.homework_total_score) as total FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE h.student_id = s.id AND l.group_id = ?" +
+                "   UNION ALL " +
+                "   SELECT SUM(tr.total_score) as earned, SUM(ts.total_questions) as total FROM test_results tr JOIN test_sessions ts ON tr.test_session_id = ts.id JOIN lessons l ON ts.lesson_id = l.id WHERE tr.student_id = s.id AND l.group_id = ?" +
+                "   UNION ALL " +
+                "   SELECT SUM(qr.total_score) as earned, SUM(qs.total_questions) as total FROM question_results qr JOIN question_sessions qs ON qr.question_session_id = qs.id JOIN lessons l ON qs.lesson_id = l.id WHERE qr.student_id = s.id AND l.group_id = ?" +
+                " )" +
+                "), 0) as avg_score, " +
                 "COALESCE((SELECT COUNT(*) FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id AND l.group_id = ? AND a.present = 0), 0) as missed_lessons " +
                 "FROM students s " +
                 "JOIN student_groups sg ON s.id = sg.student_id " +
@@ -91,6 +108,8 @@ public class ReportService {
             pstmt.setInt(2, groupId);
             pstmt.setInt(3, groupId);
             pstmt.setInt(4, groupId);
+            pstmt.setInt(5, groupId);
+            pstmt.setInt(6, groupId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 int rank = 1;
                 while (rs.next()) {
@@ -239,14 +258,23 @@ public class ReportService {
     public static List<RiskStudent> getAtRiskStudents() {
         List<RiskStudent> students = new ArrayList<>();
         String query = "SELECT s.id, s.first_name || ' ' || s.last_name as full_name, g.name as group_name, " +
-                "COALESCE((SELECT (1.0 - AVG(CAST(present AS DOUBLE))) * 100 FROM (SELECT a.present FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id ORDER BY l.lesson_date DESC LIMIT 100)), 0) as missed_rate, " +
-                "COALESCE((SELECT AVG(score) FROM (SELECT h.score FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE h.student_id = s.id AND h.score IS NOT NULL ORDER BY l.lesson_date DESC LIMIT 100)), 0) as avg_score " +
+                "COALESCE((SELECT AVG(CAST(present AS DOUBLE)) * 100 FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id), 0) as attendance_rate, " +
+                "COALESCE((" +
+                "  COALESCE((SELECT SUM(h.score) FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE h.student_id = s.id), 0) + " +
+                "  COALESCE((SELECT SUM(tr.total_score) FROM test_results tr JOIN test_sessions ts ON tr.test_session_id = ts.id JOIN lessons l ON ts.lesson_id = l.id WHERE tr.student_id = s.id), 0) + " +
+                "  COALESCE((SELECT SUM(qr.total_score) FROM question_results qr JOIN question_sessions qs ON qr.question_session_id = qs.id JOIN lessons l ON qs.lesson_id = l.id WHERE qr.student_id = s.id), 0)" +
+                ") * 100.0 / NULLIF(" +
+                "  COALESCE((SELECT SUM(l.homework_total_score) FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE h.student_id = s.id), 0) + " +
+                "  COALESCE((SELECT SUM(ts.total_questions) FROM test_results tr JOIN test_sessions ts ON tr.test_session_id = ts.id JOIN lessons l ON ts.lesson_id = l.id WHERE tr.student_id = s.id), 0) + " +
+                "  COALESCE((SELECT SUM(qs.total_questions) FROM question_results qr JOIN question_sessions qs ON qr.question_session_id = qs.id JOIN lessons l ON qs.lesson_id = l.id WHERE qr.student_id = s.id), 0)" +
+                ", 0), 0) as performance_rate " +
                 "FROM students s " +
                 "JOIN student_groups sg ON s.id = sg.student_id " +
                 "JOIN groups g ON sg.group_id = g.id " +
+                "WHERE (SELECT COUNT(*) FROM lessons WHERE group_id = g.id) > 0 " +
                 "GROUP BY s.id, g.id " +
-                "HAVING missed_rate > 20 OR avg_score < 60 " +
-                "ORDER BY missed_rate DESC, avg_score ASC " +
+                "HAVING attendance_rate < 50 OR performance_rate < 50 " +
+                "ORDER BY attendance_rate ASC, performance_rate ASC " +
                 "LIMIT 10";
 
         try (Connection conn = DatabaseManager.getConnection();
@@ -256,8 +284,8 @@ public class ReportService {
                 students.add(new RiskStudent(
                         rs.getInt("id"),
                         rs.getString("full_name"),
-                        rs.getDouble("missed_rate"),
-                        rs.getDouble("avg_score"),
+                        rs.getDouble("attendance_rate"),
+                        rs.getDouble("performance_rate"),
                         rs.getString("group_name")
                 ));
             }
@@ -302,11 +330,21 @@ public class ReportService {
             List<QuestionScore> questions = getQuestionScores(lesson.id, studentId);
             
             double totalScore = 0;
-            for (TestScore t : tests) totalScore += t.score();
-            for (HomeworkScore h : homeworks) totalScore += h.score();
-            for (QuestionScore q : questions) totalScore += q.score();
+            double totalValue = 0;
+            for (TestScore t : tests) {
+                totalScore += t.score();
+                totalValue += t.total();
+            }
+            for (HomeworkScore h : homeworks) {
+                totalScore += h.score();
+                totalValue += h.total();
+            }
+            for (QuestionScore q : questions) {
+                totalScore += q.score();
+                totalValue += q.total();
+            }
             
-            details.add(new DetailedLessonScore(lesson.date, lesson.present, tests, homeworks, questions, totalScore));
+            details.add(new DetailedLessonScore(lesson.date, lesson.present, tests, homeworks, questions, totalScore, totalValue));
         }
         
         return details;
@@ -320,21 +358,22 @@ public class ReportService {
             String dateStr = detail.date();
             String statusStr = detail.present() ? "Kelgan" : "Kelmagan";
             
-            if (!detail.present()) {
-                rows.add(new LessonScoreRow(dateStr, statusStr, "-", "-", null));
-            } else if (detail.tests().isEmpty() && detail.homeworks().isEmpty() && detail.questions().isEmpty()) {
-                rows.add(new LessonScoreRow(dateStr, statusStr, "-", "-", 0.0));
+            if (detail.tests().isEmpty() && detail.homeworks().isEmpty() && detail.questions().isEmpty()) {
+                rows.add(new LessonScoreRow(dateStr, statusStr, "-", "-", 0.0, 0.0));
             } else {
                 for (TestScore test : detail.tests()) {
-                    rows.add(new LessonScoreRow(dateStr, statusStr, "Test", test.topic(), test.score()));
+                    Double score = detail.present() ? test.score() : null;
+                    rows.add(new LessonScoreRow(dateStr, statusStr, "Test", test.topic(), score, (double) test.total()));
                 }
                 
                 for (HomeworkScore hw : detail.homeworks()) {
-                    rows.add(new LessonScoreRow(dateStr, statusStr, "Uy vazifa", "-", hw.score()));
+                    Double score = detail.present() ? hw.score() : null;
+                    rows.add(new LessonScoreRow(dateStr, statusStr, "Uy vazifa", "-", score, hw.total()));
                 }
                 
                 for (QuestionScore q : detail.questions()) {
-                    rows.add(new LessonScoreRow(dateStr, statusStr, "Savol", q.topic(), q.score()));
+                    Double score = detail.present() ? q.score() : null;
+                    rows.add(new LessonScoreRow(dateStr, statusStr, "Savol", q.topic(), score, (double) q.total()));
                 }
             }
         }
@@ -344,20 +383,22 @@ public class ReportService {
     
     private static List<TestScore> getTestScores(int lessonId, int studentId) {
         List<TestScore> scores = new ArrayList<>();
-        String query = "SELECT ts.topic, tr.total_score " +
+        String query = "SELECT ts.topic, tr.total_score, ts.total_questions " +
                 "FROM test_sessions ts " +
-                "JOIN test_results tr ON ts.id = tr.test_session_id " +
-                "WHERE ts.lesson_id = ? AND tr.student_id = ?";
+                "LEFT JOIN test_results tr ON ts.id = tr.test_session_id AND tr.student_id = ? " +
+                "WHERE ts.lesson_id = ?";
         
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, lessonId);
-            pstmt.setInt(2, studentId);
+            pstmt.setInt(1, studentId);
+            pstmt.setInt(2, lessonId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     String topic = rs.getString("topic");
                     if (topic == null || topic.isEmpty()) topic = "Test";
-                    scores.add(new TestScore(topic, rs.getDouble("total_score")));
+                    double score = rs.getDouble("total_score");
+                    if (rs.wasNull()) score = 0; // Use 0 for calculations, but we'll handle null for display later
+                    scores.add(new TestScore(topic, score, rs.getInt("total_questions")));
                 }
             }
         } catch (SQLException e) {
@@ -368,18 +409,21 @@ public class ReportService {
     
     private static List<HomeworkScore> getHomeworkScores(int lessonId, int studentId) {
         List<HomeworkScore> scores = new ArrayList<>();
-        String query = "SELECT score FROM homeworks WHERE lesson_id = ? AND student_id = ?";
+        String query = "SELECT h.score, l.homework_total_score " +
+                "FROM lessons l " +
+                "LEFT JOIN homeworks h ON l.id = h.lesson_id AND h.student_id = ? " +
+                "WHERE l.id = ? AND l.homework_total_score > 0";
         
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, lessonId);
-            pstmt.setInt(2, studentId);
+            pstmt.setInt(1, studentId);
+            pstmt.setInt(2, lessonId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
+                    double total = rs.getDouble("homework_total_score");
                     double score = rs.getDouble("score");
-                    if (!rs.wasNull()) {
-                        scores.add(new HomeworkScore(score));
-                    }
+                    if (rs.wasNull()) score = 0;
+                    scores.add(new HomeworkScore(score, total));
                 }
             }
         } catch (SQLException e) {
@@ -390,20 +434,22 @@ public class ReportService {
     
     private static List<QuestionScore> getQuestionScores(int lessonId, int studentId) {
         List<QuestionScore> scores = new ArrayList<>();
-        String query = "SELECT qs.topic, qr.total_score " +
+        String query = "SELECT qs.topic, qr.total_score, qs.total_questions " +
                 "FROM question_sessions qs " +
-                "JOIN question_results qr ON qs.id = qr.question_session_id " +
-                "WHERE qs.lesson_id = ? AND qr.student_id = ?";
+                "LEFT JOIN question_results qr ON qs.id = qr.question_session_id AND qr.student_id = ? " +
+                "WHERE qs.lesson_id = ?";
         
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setInt(1, lessonId);
-            pstmt.setInt(2, studentId);
+            pstmt.setInt(1, studentId);
+            pstmt.setInt(2, lessonId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     String topic = rs.getString("topic");
                     if (topic == null || topic.isEmpty()) topic = "Savol";
-                    scores.add(new QuestionScore(topic, rs.getDouble("total_score")));
+                    double score = rs.getDouble("total_score");
+                    if (rs.wasNull()) score = 0;
+                    scores.add(new QuestionScore(topic, score, rs.getInt("total_questions")));
                 }
             }
         } catch (SQLException e) {

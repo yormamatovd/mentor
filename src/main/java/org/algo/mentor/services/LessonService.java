@@ -6,7 +6,6 @@ import org.algo.mentor.config.DatabaseManager;
 import org.algo.mentor.models.*;
 
 import java.sql.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +29,7 @@ public class LessonService {
                 
                 try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
-                        return new Lesson(generatedKeys.getInt(1), groupId, dateTime);
+                        return new Lesson(generatedKeys.getInt(1), groupId, dateTime, dateTime.toString(), 0.0);
                     }
                 }
             }
@@ -119,7 +118,7 @@ public class LessonService {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         sessions.add(new TestSession(rs.getInt("id"), rs.getInt("lesson_id"), 
-                                rs.getString("topic"), rs.getDouble("point_per_correct")));
+                                rs.getString("topic"), rs.getInt("total_questions")));
                     }
                 }
             }
@@ -172,7 +171,7 @@ public class LessonService {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         sessions.add(new QuestionSession(rs.getInt("id"), rs.getInt("lesson_id"), 
-                                rs.getString("topic"), rs.getDouble("point_per_correct")));
+                                rs.getString("topic"), rs.getInt("total_questions")));
                     }
                 }
             }
@@ -215,12 +214,20 @@ public class LessonService {
     /**
      * Barcha ma'lumotlarni saqlash (Auto-save uchun)
      */
-    public static void saveAllData(List<Attendance> attendances, List<Homework> homeworks, 
+    public static void saveAllData(Lesson lesson, List<Attendance> attendances, List<Homework> homeworks, 
                                  List<TestSession> testSessions, List<QuestionSession> questionSessions) {
         Connection conn = null;
         try {
             conn = DatabaseManager.getConnection();
             conn.setAutoCommit(false);
+
+            // Dars ma'lumotlarini saqlash (Homework total score)
+            String lessonSql = "UPDATE lessons SET homework_total_score = ? WHERE id = ?";
+            try (PreparedStatement lessonPstmt = conn.prepareStatement(lessonSql)) {
+                lessonPstmt.setDouble(1, lesson.getHomeworkTotalScore());
+                lessonPstmt.setInt(2, lesson.getId());
+                lessonPstmt.executeUpdate();
+            }
 
             // Davomatni saqlash
             String attSql = "UPDATE attendance SET present = ? WHERE id = ?";
@@ -246,13 +253,13 @@ public class LessonService {
             }
 
             // Test sessiyalari va natijalari
-            String tsSql = "UPDATE test_sessions SET topic = ?, point_per_correct = ? WHERE id = ?";
+            String tsSql = "UPDATE test_sessions SET topic = ?, total_questions = ? WHERE id = ?";
             String trSql = "UPDATE test_results SET section = ?, correct_count = ?, total_score = ? WHERE id = ?";
             try (PreparedStatement tsPstmt = conn.prepareStatement(tsSql);
                  PreparedStatement trPstmt = conn.prepareStatement(trSql)) {
                 for (TestSession ts : testSessions) {
                     tsPstmt.setString(1, ts.getTopic());
-                    tsPstmt.setDouble(2, ts.getPointPerCorrect());
+                    tsPstmt.setInt(2, ts.getTotalQuestions());
                     tsPstmt.setInt(3, ts.getId());
                     tsPstmt.addBatch();
 
@@ -269,13 +276,13 @@ public class LessonService {
             }
 
             // Savol sessiyalari va natijalari
-            String qsSql = "UPDATE question_sessions SET topic = ?, point_per_correct = ? WHERE id = ?";
+            String qsSql = "UPDATE question_sessions SET topic = ?, total_questions = ? WHERE id = ?";
             String qrSql = "UPDATE question_results SET section = ?, correct_count = ?, total_score = ? WHERE id = ?";
             try (PreparedStatement qsPstmt = conn.prepareStatement(qsSql);
                  PreparedStatement qrPstmt = conn.prepareStatement(qrSql)) {
                 for (QuestionSession qs : questionSessions) {
                     qsPstmt.setString(1, qs.getTopic());
-                    qsPstmt.setDouble(2, qs.getPointPerCorrect());
+                    qsPstmt.setInt(2, qs.getTotalQuestions());
                     qsPstmt.setInt(3, qs.getId());
                     qsPstmt.addBatch();
 
@@ -340,14 +347,14 @@ public class LessonService {
      * Yangi test sessiyasi yaratish
      */
     public static TestSession createTestSession(int lessonId) {
-        String sql = "INSERT INTO test_sessions (lesson_id, point_per_correct) VALUES (?, 2.0)";
+        String sql = "INSERT INTO test_sessions (lesson_id) VALUES (?)";
         try {
             Connection conn = DatabaseManager.getConnection();
             try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 pstmt.setInt(1, lessonId);
                 pstmt.executeUpdate();
                 try (ResultSet rs = pstmt.getGeneratedKeys()) {
-                    if (rs.next()) return new TestSession(rs.getInt(1), lessonId, "", 2.0);
+                    if (rs.next()) return new TestSession(rs.getInt(1), lessonId, "", 0);
                 }
             }
         } catch (SQLException e) { e.printStackTrace(); }
@@ -358,14 +365,14 @@ public class LessonService {
      * Yangi savol sessiyasi yaratish
      */
     public static QuestionSession createQuestionSession(int lessonId) {
-        String sql = "INSERT INTO question_sessions (lesson_id, point_per_correct) VALUES (?, 2.0)";
+        String sql = "INSERT INTO question_sessions (lesson_id) VALUES (?)";
         try {
             Connection conn = DatabaseManager.getConnection();
             try (PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
                 pstmt.setInt(1, lessonId);
                 pstmt.executeUpdate();
                 try (ResultSet rs = pstmt.getGeneratedKeys()) {
-                    if (rs.next()) return new QuestionSession(rs.getInt(1), lessonId, "", 2.0);
+                    if (rs.next()) return new QuestionSession(rs.getInt(1), lessonId, "", 0);
                 }
             }
         } catch (SQLException e) { e.printStackTrace(); }
@@ -389,7 +396,7 @@ public class LessonService {
                 try (ResultSet rs = pstmt.executeQuery()) {
                     while (rs.next()) {
                         lessons.add(new Lesson(rs.getInt("id"), rs.getInt("group_id"), 
-                                LocalDateTime.parse(rs.getString("lesson_date")), rs.getString("topics")));
+                                LocalDateTime.parse(rs.getString("lesson_date")), rs.getString("topics"), rs.getDouble("homework_total_score")));
                     }
                 }
             }
