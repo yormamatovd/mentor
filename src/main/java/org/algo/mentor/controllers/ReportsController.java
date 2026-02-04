@@ -314,20 +314,29 @@ public class ReportsController implements NavigableController {
     }
 
     private void loadIndividualStats(int studentId) {
-        // We need groupId for individual stats in ReportService, but let's assume we want it across all groups or just find the student's group
-        // For simplicity, let's find the first group this student belongs to
-        ObservableList<Group> groups = GroupService.searchGroups("");
+        // Find group for student
         int groupId = -1;
-        // In a real app we'd get the student's current group.
-        // Let's modify ReportService to not strictly require groupId if we want overall stats, or just use 0/default.
-        // Actually, let's just use the first group for now or modify the UI to select group then student.
         
-        // For now, let's just fetch for a specific group if one is selected in Tab 2, or just the first group.
+        // 1. Try currently selected group in filter
         Group selectedGroup = groupFilterCombo.getValue();
         if (selectedGroup != null) {
             groupId = selectedGroup.getId();
-        } else if (!groups.isEmpty()) {
-            groupId = groups.get(0).getId();
+        } 
+        
+        // 2. If no group selected, find student's actual groups
+        if (groupId == -1) {
+            ObservableList<Integer> studentGroups = StudentService.getGroupIdsByStudent(studentId);
+            if (!studentGroups.isEmpty()) {
+                groupId = studentGroups.get(0);
+            }
+        }
+        
+        // 3. Fallback to first available group if still not found
+        if (groupId == -1) {
+            ObservableList<Group> allGroups = GroupService.searchGroups("");
+            if (!allGroups.isEmpty()) {
+                groupId = allGroups.get(0).getId();
+            }
         }
 
         if (groupId != -1) {
@@ -336,7 +345,6 @@ public class ReportsController implements NavigableController {
             // Filter last 1 year
             LocalDate oneYearAgo = LocalDate.now().minusYears(1);
             List<ReportService.DetailedLessonScore> details = allDetails.stream()
-                    .filter(d -> d.totalValue() > 0)
                     .filter(d -> {
                         try {
                             return LocalDate.parse(d.date()).isAfter(oneYearAgo);
