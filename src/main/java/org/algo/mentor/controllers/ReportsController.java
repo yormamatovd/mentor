@@ -17,6 +17,8 @@ import org.algo.mentor.services.GroupService;
 import org.algo.mentor.services.PdfExportService;
 import org.algo.mentor.services.ReportService;
 import org.algo.mentor.services.StudentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ReportsController implements NavigableController {
+    private static final Logger log = LoggerFactory.getLogger(ReportsController.class);
 
     @FXML private Label totalStudentsLabel;
     @FXML private Label totalGroupsLabel;
@@ -46,7 +49,8 @@ public class ReportsController implements NavigableController {
     @FXML private TableColumn<ReportService.StudentStat, Integer> studentMissedCol;
     @FXML private TableColumn<ReportService.StudentStat, Double> studentAvgScoreCol;
 
-    @FXML private ComboBox<Student> studentFilterCombo;
+    @FXML private TextField studentSearchField;
+    @FXML private ListView<Student> studentSearchResultsList;
     @FXML private Label individualRankLabel;
     @FXML private Label individualAvgScoreLabel;
     @FXML private Label individualAttRateLabel;
@@ -62,6 +66,7 @@ public class ReportsController implements NavigableController {
     @FXML private Label personalExportStatusLabel;
 
     private NavigationController navigationController;
+    private Student selectedStudent;
 
     @FXML
     public void initialize() {
@@ -90,10 +95,14 @@ public class ReportsController implements NavigableController {
             if (val != null) loadStudentStats(val.getId());
         });
         
-        studentFilterCombo.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
+        studentSearchResultsList.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
             if (val != null) {
+                this.selectedStudent = val;
                 loadIndividualStats(val.getId());
                 exportPersonalPdfBtn.setDisable(false);
+                studentSearchResultsList.setVisible(false);
+                studentSearchResultsList.setManaged(false);
+                studentSearchField.setText(val.getFirstName() + " " + val.getLastName());
             } else {
                 exportPersonalPdfBtn.setDisable(true);
             }
@@ -122,10 +131,7 @@ public class ReportsController implements NavigableController {
         ReportService.SummaryStat summary = ReportService.getSummaryStatistics();
         totalStudentsLabel.setText(String.valueOf(summary.totalStudents()));
         totalGroupsLabel.setText(String.valueOf(summary.totalGroups()));
-        
-        List<ReportService.GroupStat> groupStats = ReportService.getGroupStatistics();
-        double avgAtt = groupStats.stream().mapToDouble(ReportService.GroupStat::avgAttendance).average().orElse(0.0);
-        avgAttendanceLabel.setText(String.format("%.1f%%", avgAtt));
+        avgAttendanceLabel.setText(String.format("%.1f%%", summary.avgAttendance()));
     }
 
     private void setupGroupStatsTable() {
@@ -276,7 +282,6 @@ public class ReportsController implements NavigableController {
 
     private void loadFilterCombos() {
         groupFilterCombo.setItems(GroupService.searchGroups(""));
-        studentFilterCombo.setItems(StudentService.searchStudentsGlobal(""));
         
         // Custom string converters for combos
         groupFilterCombo.setCellFactory(lv -> new ListCell<>() {
@@ -292,16 +297,14 @@ public class ReportsController implements NavigableController {
             }
         });
         
-        studentFilterCombo.setCellFactory(lv -> new ListCell<>() {
+        studentSearchResultsList.setCellFactory(lv -> new ListCell<>() {
             @Override protected void updateItem(Student item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty ? null : item.getFirstName() + " " + item.getLastName());
-            }
-        });
-        studentFilterCombo.setButtonCell(new ListCell<>() {
-            @Override protected void updateItem(Student item, boolean empty) {
-                super.updateItem(item, empty);
-                setText(empty ? null : item.getFirstName() + " " + item.getLastName());
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(item.getFirstName() + " " + item.getLastName() + " (" + item.getPhone() + ")");
+                }
             }
         });
     }
@@ -415,13 +418,33 @@ public class ReportsController implements NavigableController {
     }
 
     @FXML
+    private void onSearchStudentClick() {
+        String query = studentSearchField.getText().trim();
+        if (query.isEmpty()) {
+            studentSearchResultsList.setVisible(false);
+            studentSearchResultsList.setManaged(false);
+            return;
+        }
+        
+        ObservableList<Student> results = StudentService.searchStudentsGlobal(query);
+        studentSearchResultsList.setItems(results);
+        studentSearchResultsList.setVisible(true);
+        studentSearchResultsList.setManaged(true);
+        
+        if (results.isEmpty()) {
+            showStatus("O'quvchi topilmadi", true);
+        } else {
+            clearStatus();
+        }
+    }
+
+    @FXML
     private void onExportPersonalPdfClick() {
-        Student student = studentFilterCombo.getValue();
-        if (student == null) return;
+        if (selectedStudent == null) return;
 
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Talaba hisobotini saqlash");
-        fileChooser.setInitialFileName(student.getFirstName() + "_" + student.getLastName() + "_hisobot.pdf");
+        fileChooser.setInitialFileName(selectedStudent.getFirstName() + "_" + selectedStudent.getLastName() + "_hisobot.pdf");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
 
         File file = fileChooser.showSaveDialog(exportPersonalPdfBtn.getScene().getWindow());
@@ -435,7 +458,7 @@ public class ReportsController implements NavigableController {
                 WritableImage perfImage = performanceChart.snapshot(params, null);
 
                 PdfExportService.exportStudentReport(
-                        student,
+                        selectedStudent,
                         individualAttTable.getItems(),
                         individualRankLabel.getText(),
                         individualAvgScoreLabel.getText(),
@@ -447,7 +470,7 @@ public class ReportsController implements NavigableController {
 
                 showStatus("Talaba hisoboti PDF formatida saqlandi.", false);
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error(e.getMessage());
                 showStatus("PDF eksport qilishda xatolik: " + e.getMessage(), true);
             }
         }

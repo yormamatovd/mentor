@@ -26,9 +26,7 @@ import org.algo.mentor.services.LessonService;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Darslar bo'limi uchun controller.
@@ -71,6 +69,7 @@ public class LessonsController implements NavigableController {
     private List<Homework> homeworks = new ArrayList<>();
     private List<TestSession> testSessions = new ArrayList<>();
     private List<QuestionSession> questionSessions = new ArrayList<>();
+    private Map<Integer, Boolean> presenceMap = new HashMap<>();
     
     private Timeline autoSaveTimeline;
     private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -247,11 +246,19 @@ public class LessonsController implements NavigableController {
      * Barcha bo'limlarni qayta chizish
      */
     private void renderAll() {
+        refreshPresenceMap();
         refreshTotalScores();
         renderAttendance();
         renderHomework();
         renderTestSessions();
         renderQuestionSessions();
+    }
+
+    private void refreshPresenceMap() {
+        presenceMap.clear();
+        for (Attendance att : attendances) {
+            presenceMap.put(att.getStudentId(), att.isPresent());
+        }
     }
 
     /**
@@ -295,6 +302,7 @@ public class LessonsController implements NavigableController {
         // Kelmaganlarni oxiriga sortlash
         attendances.sort(Comparator.comparing(Attendance::isPresent).reversed().thenComparing(Attendance::getStudentName));
 
+        int count = 1;
         for (Attendance att : attendances) {
             HBox box = new HBox(10);
             box.setAlignment(Pos.CENTER_LEFT);
@@ -302,7 +310,7 @@ public class LessonsController implements NavigableController {
             box.setPrefWidth(350);
             updateStudentBoxStyle(box, att.isPresent());
 
-            Label name = new Label(att.getStudentName());
+            Label name = new Label(count++ + ". " + att.getStudentName());
             logger.debug("Rendering attendance for student: {}", att.getStudentName());
             name.setPrefWidth(200);
             name.setStyle("-fx-font-weight: bold; -fx-text-fill: #2d3748;");
@@ -316,8 +324,9 @@ public class LessonsController implements NavigableController {
             if (isEditing) {
                 statusBtn.setOnMouseClicked(e -> {
                     att.setPresent(!att.isPresent());
+                    refreshPresenceMap(); // Faqat mapni yangilaymiz
                     triggerAutoSave();
-                    renderAll();
+                    renderAll(); // Hozircha to'liq render, lekin cache yo'qligi va Map optimizatsiyasi bilan tezlashadi
                 });
             }
 
@@ -370,6 +379,7 @@ public class LessonsController implements NavigableController {
         totalScoreBox.getChildren().addAll(totalLabel, totalInput);
         homeworkFlowPane.getChildren().add(totalScoreBox);
 
+        int count = 1;
         for (Homework hw : homeworks) {
             HBox box = new HBox(10);
             box.setAlignment(Pos.CENTER_LEFT);
@@ -379,7 +389,7 @@ public class LessonsController implements NavigableController {
             boolean present = isStudentPresent(hw.getStudentId());
             updateStudentBoxStyle(box, present);
 
-            Label name = new Label(hw.getStudentName());
+            Label name = new Label(count++ + ". " + hw.getStudentName());
             name.setPrefWidth(200);
             name.setStyle("-fx-text-fill: #2d3748;");
 
@@ -536,15 +546,15 @@ public class LessonsController implements NavigableController {
             return 0;
         });
 
-        for (Object res : results) {
-            resultsPane.getChildren().add(createResultRow(res, type, sessionObj));
+        for (int i = 0; i < results.size(); i++) {
+            resultsPane.getChildren().add(createResultRow(results.get(i), type, sessionObj, i + 1));
         }
 
         card.getChildren().addAll(header, resultsPane);
         return card;
     }
 
-    private HBox createResultRow(Object res, String type, Object session) {
+    private HBox createResultRow(Object res, String type, Object session, int index) {
         HBox box = new HBox(10);
         box.setAlignment(Pos.CENTER_LEFT);
         box.setPadding(new Insets(8));
@@ -555,7 +565,7 @@ public class LessonsController implements NavigableController {
         boolean present = isStudentPresent(studentId);
         updateStudentBoxStyle(box, present);
 
-        Label name = new Label(nameStr);
+        Label name = new Label(index + ". " + nameStr);
         name.setPrefWidth(150);
         name.setStyle("-fx-font-size: 13; -fx-text-fill: #2d3748;");
 
@@ -781,7 +791,7 @@ public class LessonsController implements NavigableController {
     }
 
     private boolean isStudentPresent(int studentId) {
-        return attendances.stream().filter(a -> a.getStudentId() == studentId).findFirst().map(Attendance::isPresent).orElse(true);
+        return presenceMap.getOrDefault(studentId, true);
     }
 
     private int sortStudents(int id1, int id2, double s1, double s2, String n1, String n2) {

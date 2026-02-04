@@ -173,7 +173,7 @@
     -fx-background-color: white;
     -fx-background-radius: 12px;
     -fx-padding: 24px;
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 15, 0, 0, 8);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 4);
     -fx-border-color: #f1f5f9;
     -fx-border-radius: 12px;
 }

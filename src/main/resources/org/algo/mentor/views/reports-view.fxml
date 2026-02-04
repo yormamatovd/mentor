@@ -94,13 +94,17 @@
         <Tab text="Shaxsiy statistika">
             <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: #f8f9fc;">
                 <VBox spacing="20" style="-fx-padding: 20;">
-                    <HBox spacing="15" alignment="CENTER_LEFT">
-                        <Label text="O'quvchini tanlang:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
-                        <ComboBox fx:id="studentFilterCombo" promptText="O'quvchi tanlang..." prefWidth="300" styleClass="form-control"/>
-                        <Region HBox.hgrow="ALWAYS" />
-                        <Label fx:id="personalExportStatusLabel" visible="false" managed="false" style="-fx-font-size: 12; -fx-padding: 8; -fx-background-radius: 5;"/>
-                        <Button fx:id="exportPersonalPdfBtn" text="Eksport PDF" onAction="#onExportPersonalPdfClick" disable="true" styleClass="btn, btn-primary"/>
-                    </HBox>
+                    <VBox spacing="10">
+                        <HBox spacing="15" alignment="CENTER_LEFT">
+                            <Label text="O'quvchini tanlang:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
+                            <TextField fx:id="studentSearchField" promptText="O'quvchi ismi yoki telefonini kiriting..." prefWidth="350" styleClass="form-control"/>
+                            <Button text="Qidirish" onAction="#onSearchStudentClick" styleClass="btn, btn-primary"/>
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label fx:id="personalExportStatusLabel" visible="false" managed="false" style="-fx-font-size: 12; -fx-padding: 8; -fx-background-radius: 5;"/>
+                            <Button fx:id="exportPersonalPdfBtn" text="Eksport PDF" onAction="#onExportPersonalPdfClick" disable="true" styleClass="btn, btn-primary"/>
+                        </HBox>
+                        <ListView fx:id="studentSearchResultsList" prefHeight="150" visible="false" managed="false" style="-fx-background-radius: 8; -fx-border-radius: 8;"/>
+                    </VBox>
                     
                     <GridPane hgap="20" vgap="20">
                     <columnConstraints>

@@ -1,6 +1,8 @@
 package org.algo.mentor.services;
 
 import org.algo.mentor.config.DatabaseManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -8,11 +10,13 @@ import java.util.List;
 
 public class ReportService {
 
+    private static final Logger log = LoggerFactory.getLogger(ReportService.class);
+
     public record GroupStat(int id, String name, int studentCount, double avgAttendance, double avgScore) {}
     public record StudentStat(int id, String fullName, double attendanceRate, double avgScore, int rank, int missedLessons) {}
     public record AttendanceDetail(String date, boolean present, double score, String scoreBreakdown) {}
     public record LessonStat(String date, double avgScore) {}
-    public record SummaryStat(int totalStudents, int totalGroups, int lessonsToday) {}
+    public record SummaryStat(int totalStudents, int totalGroups, int lessonsToday, double avgAttendance) {}
     public record UpcomingLesson(int id, String groupName, String time) {}
     public record RiskStudent(int id, String fullName, double attendanceRate, double performanceRate, String groupName) {}
     
@@ -26,7 +30,7 @@ public class ReportService {
 
     public static SummaryStat getSummaryStatistics() {
         int students = 0, groups = 0, lessons = 0;
-        String today = java.time.LocalDate.now().toString();
+        double avgAtt = 0;
         
         try (Connection conn = DatabaseManager.getConnection()) {
             try (Statement stmt = conn.createStatement()) {
@@ -35,6 +39,9 @@ public class ReportService {
                 
                 rs = stmt.executeQuery("SELECT COUNT(*) FROM groups");
                 if (rs.next()) groups = rs.getInt(1);
+                
+                rs = stmt.executeQuery("SELECT COALESCE(AVG(CAST(present AS DOUBLE)) * 100, 0) FROM attendance");
+                if (rs.next()) avgAtt = rs.getDouble(1);
             }
             
             try (PreparedStatement pstmt = conn.prepareStatement("SELECT COUNT(*) FROM schedules WHERE day_of_week = ?")) {
@@ -45,7 +52,7 @@ public class ReportService {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return new SummaryStat(students, groups, lessons);
+        return new SummaryStat(students, groups, lessons, avgAtt);
     }
 
     public static List<GroupStat> getGroupStatistics() {
@@ -273,7 +280,7 @@ public class ReportService {
                 "JOIN groups g ON sg.group_id = g.id " +
                 "WHERE (SELECT COUNT(*) FROM lessons WHERE group_id = g.id) > 0 " +
                 "GROUP BY s.id, g.id " +
-                "HAVING attendance_rate < 50 OR performance_rate < 50 " +
+                "HAVING attendance_rate < 75 OR performance_rate < 50 " +
                 "ORDER BY attendance_rate ASC, performance_rate ASC " +
                 "LIMIT 10";
 
@@ -290,7 +297,8 @@ public class ReportService {
                 ));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error(e.getSQLState());
+            log.error(e.getMessage());
         }
         return students;
     }
@@ -321,7 +329,8 @@ public class ReportService {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error(e.getSQLState());
+            log.error(e.getMessage());
         }
         
         for (LessonBasic lesson : lessonBasics) {
@@ -402,7 +411,8 @@ public class ReportService {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            log.error(e.getSQLState());
+            log.error(e.getMessage());
         }
         return scores;
     }
@@ -427,8 +437,8 @@ public class ReportService {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-        }
+            log.error(e.getSQLState());
+            log.error(e.getMessage());        }
         return scores;
     }
     
@@ -453,8 +463,8 @@ public class ReportService {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-        }
+            log.error(e.getSQLState());
+            log.error(e.getMessage());        }
         return scores;
     }
 }

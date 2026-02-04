@@ -65,7 +65,7 @@
         </HBox>
 
         <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent;" hbarPolicy="NEVER" pannable="true">
-            <VBox spacing="20.0" cache="true" cacheHint="SPEED">
+            <VBox spacing="20.0">
                 <!-- 1. DAVOMAT BO'LIMI (Har doim ochiq) -->
                 <VBox spacing="15.0" styleClass="card">
                     <Label text="Davomat" styleClass="card-title" />
