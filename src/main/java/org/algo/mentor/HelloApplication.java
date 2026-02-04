@@ -20,7 +20,6 @@ public class HelloApplication extends Application {
     public void start(Stage stage) throws IOException {
         logger.info("Starting Mentor application");
         AppDirectoryManager.initialize();
-        DatabaseManager.initialize();
         
         logger.debug("Loading main layout FXML");
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("views/main-layout.fxml"));

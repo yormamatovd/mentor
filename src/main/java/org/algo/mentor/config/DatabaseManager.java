@@ -32,6 +32,11 @@ public class DatabaseManager {
         }
     }
 
+    public static void reinitialize() {
+        closeConnection();
+        initialize();
+    }
+
     private static void updateSchema() {
         try (Statement stmt = connection.createStatement()) {
             // Add columns if they don't exist

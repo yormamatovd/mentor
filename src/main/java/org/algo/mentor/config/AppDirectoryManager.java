@@ -19,13 +19,41 @@ public class AppDirectoryManager {
         try {
             logger.info("Initializing application directory manager");
             validateOperatingSystem();
-            createAppDirectory();
-            createRequiredFiles();
+            // Default initialization if not already set
+            if (appDirectory == null) {
+                createAppDirectory();
+            }
+            // Initialize logs at least
+            logsPath = appDirectory.resolve("logs.log");
+            if (!Files.exists(logsPath)) {
+                Files.createFile(logsPath);
+            }
             logger.info("Application directory initialized successfully at: {}", appDirectory);
         } catch (Exception e) {
             logger.error("Failed to initialize application directory", e);
             throw new RuntimeException("Failed to initialize application directory", e);
         }
+    }
+
+    public static void createDatabaseFile() throws IOException {
+        if (appDirectory == null) return;
+        databasePath = appDirectory.resolve("database.db");
+        if (!Files.exists(databasePath)) {
+            logger.info("Creating database file: {}", databasePath);
+            Files.createFile(databasePath);
+            logger.info("Database file created successfully");
+        }
+    }
+
+    public static void setAppDirectory(Path path) {
+        appDirectory = path;
+        databasePath = appDirectory.resolve("database.db");
+        logsPath = appDirectory.resolve("logs.log");
+        logger.info("Application directory manually set to: {}", appDirectory);
+    }
+
+    public static boolean checkDatabaseExists(Path directory) {
+        return Files.exists(directory.resolve("database.db"));
     }
 
     private static void validateOperatingSystem() {
@@ -71,49 +99,30 @@ public class AppDirectoryManager {
         }
     }
 
-    private static void createRequiredFiles() throws IOException {
-        databasePath = appDirectory.resolve("database.db");
-        logsPath = appDirectory.resolve("logs.log");
-
-        if (!Files.exists(databasePath)) {
-            logger.info("Creating database file: {}", databasePath);
-            Files.createFile(databasePath);
-            logger.info("Database file created successfully");
-        } else {
-            logger.debug("Database file already exists: {}", databasePath);
-        }
-
-        if (!Files.exists(logsPath)) {
-            logger.info("Creating logs file: {}", logsPath);
-            Files.createFile(logsPath);
-            logger.info("Logs file created successfully");
-        } else {
-            logger.debug("Logs file already exists: {}", logsPath);
-        }
-    }
-
     public static Path getAppDirectory() {
-        if (appDirectory == null) {
-            throw new IllegalStateException("AppDirectoryManager not initialized. Call initialize() first.");
-        }
         return appDirectory;
     }
 
     public static Path getDatabasePath() {
-        if (databasePath == null) {
-            throw new IllegalStateException("AppDirectoryManager not initialized. Call initialize() first.");
+        if (databasePath == null && appDirectory != null) {
+            databasePath = appDirectory.resolve("database.db");
         }
         return databasePath;
     }
 
     public static Path getLogsPath() {
-        if (logsPath == null) {
-            throw new IllegalStateException("AppDirectoryManager not initialized. Call initialize() first.");
-        }
         return logsPath;
     }
 
     public static String getDatabaseUrl() {
-        return "jdbc:sqlite:" + getDatabasePath().toString();
+        if (databasePath == null) {
+            // Try to resolve it if appDirectory exists
+            if (appDirectory != null) {
+                databasePath = appDirectory.resolve("database.db");
+            } else {
+                throw new IllegalStateException("Database path not set and AppDirectory not initialized.");
+            }
+        }
+        return "jdbc:sqlite:" + databasePath.toString();
     }
 }
