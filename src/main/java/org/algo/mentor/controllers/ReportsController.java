@@ -83,6 +83,7 @@ public class ReportsController implements NavigableController {
         groupComparisonChart.setAnimated(false);
         groupDistributionChart.setAnimated(false);
         individualAttendancePie.setAnimated(false);
+        individualAttendancePie.setLabelsVisible(false);
 
         if (performanceChart.getXAxis() instanceof CategoryAxis xAxis) {
             xAxis.setTickLabelRotation(-45);
