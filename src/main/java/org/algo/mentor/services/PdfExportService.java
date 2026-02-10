@@ -35,6 +35,8 @@ public class PdfExportService {
             String attRate,
             WritableImage attChart,
             WritableImage perfChart,
+            LocalDate dateFrom,
+            LocalDate dateTo,
             File file
     ) throws IOException {
         PdfWriter writer = new PdfWriter(file);
@@ -57,7 +59,9 @@ public class PdfExportService {
         document.add(new Paragraph("Telefon: " + (student.getPhone() != null ? student.getPhone() : "Ko'rsatilmagan")));
 
         // Summary Stats Table
-        document.add(new Paragraph("\nUmumiy ko'rsatkichlar (Oxirgi 1 yil):").setBold().setFontSize(14));
+        String dateRange = dateFrom.format(DateTimeFormatter.ofPattern("yyyy.MM.dd")) + " - " + 
+                          dateTo.format(DateTimeFormatter.ofPattern("yyyy.MM.dd"));
+        document.add(new Paragraph("\nUmumiy ko'rsatkichlar (" + dateRange + "):").setBold().setFontSize(14));
         Table summaryTable = new Table(UnitValue.createPercentArray(new float[]{1, 1, 1}));
         summaryTable.setWidth(UnitValue.createPercentValue(100));
         

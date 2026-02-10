@@ -51,6 +51,8 @@ public class ReportsController implements NavigableController {
 
     @FXML private TextField studentSearchField;
     @FXML private ListView<Student> studentSearchResultsList;
+    @FXML private DatePicker dateFromPicker;
+    @FXML private DatePicker dateToPicker;
     @FXML private Label individualRankLabel;
     @FXML private Label individualAvgScoreLabel;
     @FXML private Label individualAttRateLabel;
@@ -73,6 +75,7 @@ public class ReportsController implements NavigableController {
         setupGroupStatsTable();
         setupStudentStatsTable();
         setupIndividualStatsTable();
+        setupDatePickers();
         
         loadSummary();
         loadGroupStats();
@@ -255,6 +258,51 @@ public class ReportsController implements NavigableController {
         });
     }
 
+    private void setupDatePickers() {
+        System.out.println("========================================");
+        System.out.println("SETUP DATE PICKERS CALLED!");
+        System.out.println("========================================");
+        
+        if (dateFromPicker == null) {
+            System.out.println("ERROR: dateFromPicker is NULL!");
+            return;
+        }
+        if (dateToPicker == null) {
+            System.out.println("ERROR: dateToPicker is NULL!");
+            return;
+        }
+        
+        System.out.println("Date pickers are NOT null, setting values...");
+        
+        dateToPicker.setValue(LocalDate.now());
+        dateFromPicker.setValue(LocalDate.now().minusYears(1));
+        
+        System.out.println("Date pickers initialized: From=" + dateFromPicker.getValue() + ", To=" + dateToPicker.getValue());
+        
+        dateFromPicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+            System.out.println(">>> Date From CHANGED: old=" + oldVal + ", new=" + newVal + ", student=" + (selectedStudent != null ? selectedStudent.getId() : "null"));
+            if (selectedStudent != null && newVal != null && !newVal.equals(oldVal)) {
+                System.out.println(">>> RELOADING STATS for date change");
+                loadIndividualStats(selectedStudent.getId());
+            } else {
+                System.out.println(">>> NOT reloading: selectedStudent=" + (selectedStudent != null) + ", newVal=" + (newVal != null) + ", changed=" + (!newVal.equals(oldVal)));
+            }
+        });
+        
+        dateToPicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+            System.out.println(">>> Date To CHANGED: old=" + oldVal + ", new=" + newVal + ", student=" + (selectedStudent != null ? selectedStudent.getId() : "null"));
+            if (selectedStudent != null && newVal != null && !newVal.equals(oldVal)) {
+                System.out.println(">>> RELOADING STATS for date change");
+                loadIndividualStats(selectedStudent.getId());
+            } else {
+                System.out.println(">>> NOT reloading: selectedStudent=" + (selectedStudent != null) + ", newVal=" + (newVal != null) + ", changed=" + (!newVal.equals(oldVal)));
+            }
+        });
+        
+        System.out.println("Date picker listeners attached successfully!");
+        System.out.println("========================================");
+    }
+
     private void loadGroupStats() {
         List<ReportService.GroupStat> stats = ReportService.getGroupStatistics();
         groupStatsTable.setItems(FXCollections.observableArrayList(stats));
@@ -341,31 +389,71 @@ public class ReportsController implements NavigableController {
         }
 
         if (groupId != -1) {
-            List<ReportService.DetailedLessonScore> allDetails = ReportService.getDetailedLessonScores(studentId, groupId);
+            System.out.println(">>> loadIndividualStats() called for student=" + studentId + ", group=" + groupId);
             
-            // Filter last 1 year
-            LocalDate oneYearAgo = LocalDate.now().minusYears(1);
+            List<ReportService.DetailedLessonScore> allDetails = ReportService.getDetailedLessonScores(studentId, groupId);
+            System.out.println(">>> Total records from service: " + allDetails.size());
+            
+            LocalDate fromDate = dateFromPicker.getValue();
+            LocalDate toDate = dateToPicker.getValue();
+            
+            System.out.println(">>> DatePicker values: From=" + fromDate + ", To=" + toDate);
+            
+            if (fromDate == null) fromDate = LocalDate.now().minusYears(1);
+            if (toDate == null) toDate = LocalDate.now();
+            
+            final LocalDate finalFromDate = fromDate;
+            final LocalDate finalToDate = toDate;
+            
+            System.out.println(">>> Filtering with date range: " + finalFromDate + " to " + finalToDate);
+            
             List<ReportService.DetailedLessonScore> details = allDetails.stream()
                     .filter(d -> {
                         try {
-                            return LocalDate.parse(d.date()).isAfter(oneYearAgo);
+                            String dateStr = d.date();
+                            // Extract date part from datetime string (YYYY-MM-DD)
+                            if (dateStr.length() >= 10) {
+                                dateStr = dateStr.substring(0, 10);
+                            }
+                            LocalDate lessonDate = LocalDate.parse(dateStr);
+                            boolean inRange = !lessonDate.isBefore(finalFromDate) && !lessonDate.isAfter(finalToDate);
+                            if (!inRange) {
+                                System.out.println(">>> FILTERED OUT: " + d.date() + " (not in range)");
+                            }
+                            return inRange;
                         } catch (Exception e) {
-                            return true;
+                            System.out.println(">>> ERROR parsing date: " + d.date() + " - " + e.getMessage());
+                            return false; // Changed from true to false!
                         }
                     })
                     .collect(Collectors.toList());
+            
+            System.out.println(">>> After filtering: " + details.size() + " records");
 
             // Get rows for table display
             List<ReportService.LessonScoreRow> allRows = ReportService.getLessonScoreRows(studentId, groupId);
+            System.out.println(">>> Total rows for table: " + allRows.size());
+            
             List<ReportService.LessonScoreRow> rows = allRows.stream()
                     .filter(r -> {
                         try {
-                            return LocalDate.parse(r.date()).isAfter(oneYearAgo);
+                            String dateStr = r.date();
+                            // Extract date part from datetime string (YYYY-MM-DD)
+                            if (dateStr.length() >= 10) {
+                                dateStr = dateStr.substring(0, 10);
+                            }
+                            LocalDate rowDate = LocalDate.parse(dateStr);
+                            boolean inRange = !rowDate.isBefore(finalFromDate) && !rowDate.isAfter(finalToDate);
+                            return inRange;
                         } catch (Exception e) {
-                            return true;
+                            System.out.println(">>> ERROR parsing row date: " + r.date());
+                            return false; // Changed from true to false!
                         }
                     })
                     .collect(Collectors.toList());
+            
+            System.out.println(">>> Rows after filtering for table: " + rows.size());
+            System.out.println(">>> Setting " + rows.size() + " rows to table!");
             
             individualAttTable.setItems(FXCollections.observableArrayList(rows));
             
@@ -466,6 +554,12 @@ public class ReportsController implements NavigableController {
                 WritableImage attImage = individualAttendancePie.snapshot(params, null);
                 WritableImage perfImage = performanceChart.snapshot(params, null);
 
+                LocalDate fromDate = dateFromPicker.getValue();
+                LocalDate toDate = dateToPicker.getValue();
+                
+                if (fromDate == null) fromDate = LocalDate.now().minusYears(1);
+                if (toDate == null) toDate = LocalDate.now();
+                
                 PdfExportService.exportStudentReport(
                         selectedStudent,
                         individualAttTable.getItems(),
@@ -474,6 +568,8 @@ public class ReportsController implements NavigableController {
                         individualAttRateLabel.getText(),
                         attImage,
                         perfImage,
+                        fromDate,
+                        toDate,
                         file
                 );
 

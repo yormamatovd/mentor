@@ -95,13 +95,31 @@
             <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: #f8f9fc;">
                 <VBox spacing="20" style="-fx-padding: 20;">
                     <VBox spacing="10">
-                        <HBox spacing="15" alignment="CENTER_LEFT">
-                            <Label text="O'quvchini tanlang:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
-                            <TextField fx:id="studentSearchField" promptText="O'quvchi ismi yoki telefonini kiriting..." prefWidth="350" styleClass="form-control"/>
-                            <Button text="Qidirish" onAction="#onSearchStudentClick" styleClass="btn, btn-primary"/>
+                        <HBox spacing="15" alignment="BOTTOM_LEFT">
+                            <VBox spacing="5" prefWidth="350">
+                                <Label text="O'quvchini tanlang:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568; -fx-font-size: 12;"/>
+                                <TextField fx:id="studentSearchField" promptText="O'quvchi ismi yoki telefonini kiriting..." styleClass="form-control"/>
+                            </VBox>
+                            <VBox spacing="5">
+                                <Label text=" " style="-fx-font-size: 12;"/>
+                                <Button text="Qidirish" onAction="#onSearchStudentClick" styleClass="btn, btn-primary" style="-fx-padding: 8 20;"/>
+                            </VBox>
+                            <VBox spacing="5" prefWidth="150">
+                                <Label text="Dan:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568; -fx-font-size: 12;"/>
+                                <DatePicker fx:id="dateFromPicker" promptText="Sanani tanlang"/>
+                            </VBox>
+                            <VBox spacing="5" prefWidth="150">
+                                <Label text="Gacha:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568; -fx-font-size: 12;"/>
+                                <DatePicker fx:id="dateToPicker" promptText="Sanani tanlang"/>
+                            </VBox>
                             <Region HBox.hgrow="ALWAYS" />
-                            <Label fx:id="personalExportStatusLabel" visible="false" managed="false" style="-fx-font-size: 12; -fx-padding: 8; -fx-background-radius: 5;"/>
-                            <Button fx:id="exportPersonalPdfBtn" text="Eksport PDF" onAction="#onExportPersonalPdfClick" disable="true" styleClass="btn, btn-primary"/>
+                            <VBox spacing="5" alignment="TOP_RIGHT">
+                                <Label text=" " style="-fx-font-size: 12;"/>
+                                <HBox spacing="5" alignment="CENTER_RIGHT">
+                                    <Label fx:id="personalExportStatusLabel" visible="false" managed="false" style="-fx-font-size: 12; -fx-padding: 8; -fx-background-radius: 5;"/>
+                                    <Button fx:id="exportPersonalPdfBtn" text="Eksport PDF" onAction="#onExportPersonalPdfClick" disable="true" styleClass="btn, btn-primary" style="-fx-padding: 8 20;"/>
+                                </HBox>
+                            </VBox>
                         </HBox>
                         <ListView fx:id="studentSearchResultsList" prefHeight="150" visible="false" managed="false" style="-fx-background-radius: 8; -fx-border-radius: 8;"/>
                     </VBox>
