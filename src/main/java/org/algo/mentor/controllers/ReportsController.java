@@ -42,6 +42,8 @@ public class ReportsController implements NavigableController {
     @FXML private BarChart<String, Number> groupComparisonChart;
 
     @FXML private ComboBox<Group> groupFilterCombo;
+    @FXML private DatePicker studentActivityFromPicker;
+    @FXML private DatePicker studentActivityToPicker;
     @FXML private TableView<ReportService.StudentStat> studentStatsTable;
     @FXML private TableColumn<ReportService.StudentStat, Integer> studentRankCol;
     @FXML private TableColumn<ReportService.StudentStat, String> studentNameCol;
@@ -76,6 +78,7 @@ public class ReportsController implements NavigableController {
         setupStudentStatsTable();
         setupIndividualStatsTable();
         setupDatePickers();
+        setupStudentActivityDatePickers();
         
         loadSummary();
         loadGroupStats();
@@ -97,6 +100,20 @@ public class ReportsController implements NavigableController {
 
         groupFilterCombo.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
             if (val != null) loadStudentStats(val.getId());
+        });
+        
+        studentActivityFromPicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+            Group selectedGroup = groupFilterCombo.getValue();
+            if (selectedGroup != null && newVal != null && !newVal.equals(oldVal)) {
+                loadStudentStats(selectedGroup.getId());
+            }
+        });
+        
+        studentActivityToPicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+            Group selectedGroup = groupFilterCombo.getValue();
+            if (selectedGroup != null && newVal != null && !newVal.equals(oldVal)) {
+                loadStudentStats(selectedGroup.getId());
+            }
         });
         
         studentSearchResultsList.getSelectionModel().selectedItemProperty().addListener((obs, old, val) -> {
@@ -302,6 +319,11 @@ public class ReportsController implements NavigableController {
         System.out.println("Date picker listeners attached successfully!");
         System.out.println("========================================");
     }
+    
+    private void setupStudentActivityDatePickers() {
+        studentActivityToPicker.setValue(LocalDate.now());
+        studentActivityFromPicker.setValue(LocalDate.now().minusYears(1));
+    }
 
     private void loadGroupStats() {
         List<ReportService.GroupStat> stats = ReportService.getGroupStatistics();
@@ -359,7 +381,15 @@ public class ReportsController implements NavigableController {
     }
 
     private void loadStudentStats(int groupId) {
-        studentStatsTable.setItems(FXCollections.observableArrayList(ReportService.getStudentStatistics(groupId)));
+        LocalDate fromDate = studentActivityFromPicker.getValue();
+        LocalDate toDate = studentActivityToPicker.getValue();
+        
+        if (fromDate == null) fromDate = LocalDate.now().minusYears(1);
+        if (toDate == null) toDate = LocalDate.now();
+        
+        studentStatsTable.setItems(FXCollections.observableArrayList(
+            ReportService.getStudentStatistics(groupId, fromDate, toDate)
+        ));
     }
 
     private void loadIndividualStats(int studentId) {

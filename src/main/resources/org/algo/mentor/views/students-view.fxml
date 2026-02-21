@@ -117,9 +117,9 @@
                 </VBox>
                 
                 <VBox spacing="5.0">
-                    <Label text="Holati" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
+                    <Label text="Holati (to'lovga asosan)" style="-fx-font-size: 13; -fx-text-fill: #34495e; -fx-font-weight: bold;"/>
                     <HBox spacing="10.0" alignment="CENTER_LEFT" style="-fx-background-color: #f8f9fa; -fx-padding: 10; -fx-background-radius: 5;">
-                        <CheckBox fx:id="isActiveCheck" onAction="#onStatusChange"/>
+                        <CheckBox fx:id="isActiveCheck" disable="true"/>
                         <Label fx:id="statusLabel" text="Faol" style="-fx-font-weight: bold;"/>
                     </HBox>
                 </VBox>

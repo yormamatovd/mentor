@@ -76,6 +76,15 @@
                     <HBox spacing="15" alignment="CENTER_LEFT">
                         <Label text="Guruhni tanlang:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568;"/>
                         <ComboBox fx:id="groupFilterCombo" promptText="Guruh tanlang..." prefWidth="250" styleClass="form-control"/>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <VBox spacing="5" prefWidth="150">
+                            <Label text="Dan:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568; -fx-font-size: 12;"/>
+                            <DatePicker fx:id="studentActivityFromPicker" promptText="Sanani tanlang"/>
+                        </VBox>
+                        <VBox spacing="5" prefWidth="150">
+                            <Label text="Gacha:" style="-fx-font-weight: bold; -fx-text-fill: #4a5568; -fx-font-size: 12;"/>
+                            <DatePicker fx:id="studentActivityToPicker" promptText="Sanani tanlang"/>
+                        </VBox>
                     </HBox>
                     <TableView fx:id="studentStatsTable" prefHeight="600" styleClass="modern-table">
                         <columns>

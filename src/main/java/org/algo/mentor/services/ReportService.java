@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,6 +118,73 @@ public class ReportService {
             pstmt.setInt(4, groupId);
             pstmt.setInt(5, groupId);
             pstmt.setInt(6, groupId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                int rank = 1;
+                while (rs.next()) {
+                    stats.add(new StudentStat(
+                            rs.getInt("id"),
+                            rs.getString("full_name"),
+                            rs.getDouble("att_rate"),
+                            rs.getDouble("avg_score"),
+                            rank++,
+                            rs.getInt("missed_lessons")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return stats;
+    }
+
+    public static List<StudentStat> getStudentStatistics(int groupId, LocalDate fromDate, LocalDate toDate) {
+        List<StudentStat> stats = new ArrayList<>();
+        String query = "SELECT s.id, s.first_name || ' ' || s.last_name as full_name, " +
+                "COALESCE((SELECT AVG(CAST(present AS DOUBLE)) * 100 FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id AND l.group_id = ? AND l.lesson_date >= ? AND l.lesson_date <= ?), 0) as att_rate, " +
+                "COALESCE(" +
+                " (SELECT (SUM(earned) * 100.0 / NULLIF(SUM(total), 0)) FROM (" +
+                "   SELECT SUM(h.score) as earned, SUM(l.homework_total_score) as total FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE h.student_id = s.id AND l.group_id = ? AND l.lesson_date >= ? AND l.lesson_date <= ?" +
+                "   UNION ALL " +
+                "   SELECT SUM(tr.total_score) as earned, SUM(ts.total_questions) as total FROM test_results tr JOIN test_sessions ts ON tr.test_session_id = ts.id JOIN lessons l ON ts.lesson_id = l.id WHERE tr.student_id = s.id AND l.group_id = ? AND l.lesson_date >= ? AND l.lesson_date <= ?" +
+                "   UNION ALL " +
+                "   SELECT SUM(qr.total_score) as earned, SUM(qs.total_questions) as total FROM question_results qr JOIN question_sessions qs ON qr.question_session_id = qs.id JOIN lessons l ON qs.lesson_id = l.id WHERE qr.student_id = s.id AND l.group_id = ? AND l.lesson_date >= ? AND l.lesson_date <= ?" +
+                " )" +
+                "), 0) as avg_score, " +
+                "COALESCE((SELECT COUNT(*) FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id AND l.group_id = ? AND l.lesson_date >= ? AND l.lesson_date <= ? AND a.present = 0), 0) as missed_lessons " +
+                "FROM students s " +
+                "JOIN student_groups sg ON s.id = sg.student_id " +
+                "WHERE sg.group_id = ? " +
+                "ORDER BY avg_score DESC";
+        
+        String fromDateStr = fromDate.toString();
+        String toDateStr = toDate.toString();
+        
+        try (Connection conn = DatabaseManager.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            int paramIndex = 1;
+            
+            pstmt.setInt(paramIndex++, groupId);
+            pstmt.setString(paramIndex++, fromDateStr);
+            pstmt.setString(paramIndex++, toDateStr);
+            
+            pstmt.setInt(paramIndex++, groupId);
+            pstmt.setString(paramIndex++, fromDateStr);
+            pstmt.setString(paramIndex++, toDateStr);
+            
+            pstmt.setInt(paramIndex++, groupId);
+            pstmt.setString(paramIndex++, fromDateStr);
+            pstmt.setString(paramIndex++, toDateStr);
+            
+            pstmt.setInt(paramIndex++, groupId);
+            pstmt.setString(paramIndex++, fromDateStr);
+            pstmt.setString(paramIndex++, toDateStr);
+            
+            pstmt.setInt(paramIndex++, groupId);
+            pstmt.setString(paramIndex++, fromDateStr);
+            pstmt.setString(paramIndex++, toDateStr);
+            
+            pstmt.setInt(paramIndex, groupId);
+            
             try (ResultSet rs = pstmt.executeQuery()) {
                 int rank = 1;
                 while (rs.next()) {

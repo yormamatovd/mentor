@@ -293,19 +293,48 @@ public class StudentService {
         }
     }
 
+    public static boolean isStudentPaymentValid(int studentId) {
+        try {
+            Connection conn = DatabaseManager.getConnection();
+            String today = LocalDate.now().format(DATE_FORMAT);
+            String query = "SELECT COUNT(*) FROM payments WHERE student_id = ? AND payment_to_date >= ?";
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            pstmt.setInt(1, studentId);
+            pstmt.setString(2, today);
+            
+            ResultSet rs = pstmt.executeQuery();
+            boolean hasValidPayment = false;
+            if (rs.next()) {
+                hasValidPayment = rs.getInt(1) > 0;
+            }
+            rs.close();
+            pstmt.close();
+            return hasValidPayment;
+        } catch (SQLException e) {
+            logger.error("Error checking student payment validity for {}", studentId, e);
+            return false;
+        }
+    }
+
     public static boolean updateStudentPaymentStatus() {
         try {
             Connection conn = DatabaseManager.getConnection();
             String today = LocalDate.now().format(DATE_FORMAT);
 
-            String query = "UPDATE students SET is_active = 0 WHERE id NOT IN " +
-                    "(SELECT DISTINCT student_id FROM payments WHERE payment_to_date >= ?) " +
-                    "AND is_active = 1";
-            PreparedStatement pstmt = conn.prepareStatement(query);
-            pstmt.setString(1, today);
+            String activeQuery = "UPDATE students SET is_active = 1 WHERE id IN " +
+                    "(SELECT DISTINCT student_id FROM payments WHERE payment_to_date >= ?)";
+            PreparedStatement pstmt1 = conn.prepareStatement(activeQuery);
+            pstmt1.setString(1, today);
+            pstmt1.executeUpdate();
+            pstmt1.close();
 
-            pstmt.executeUpdate();
-            pstmt.close();
+            String inactiveQuery = "UPDATE students SET is_active = 0 WHERE id NOT IN " +
+                    "(SELECT DISTINCT student_id FROM payments WHERE payment_to_date >= ?)";
+            PreparedStatement pstmt2 = conn.prepareStatement(inactiveQuery);
+            pstmt2.setString(1, today);
+            pstmt2.executeUpdate();
+            pstmt2.close();
+            
             logger.info("Updated student payment status");
             return true;
         } catch (SQLException e) {

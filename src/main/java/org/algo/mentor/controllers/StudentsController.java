@@ -270,6 +270,8 @@ public class StudentsController implements NavigableController {
     }
 
     private void loadStudents() {
+        StudentService.updateStudentPaymentStatus();
+        
         String name = nameFilterField.getText();
         String phone = sanitizePhone(phoneFilterField.getText());
         if (phone.equals("+998")) phone = "";
@@ -309,11 +311,12 @@ public class StudentsController implements NavigableController {
         Label phoneLabel = new Label(formattedPhone);
         phoneLabel.setStyle("-fx-text-fill: #7f8c8d;");
         
+        boolean hasValidPayment = StudentService.isStudentPaymentValid(student.getId());
         HBox statusBox = new HBox(5);
         statusBox.setAlignment(Pos.CENTER_LEFT);
-        Circle statusCircle = new Circle(4, student.isActive() ? Color.GREEN : Color.RED);
-        Label statusLabel = new Label(student.isActive() ? "Faol" : "Faol emas");
-        statusLabel.setStyle("-fx-font-size: 12; -fx-text-fill: " + (student.isActive() ? "#27ae60" : "#e74c3c") + ";");
+        Circle statusCircle = new Circle(4, hasValidPayment ? Color.GREEN : Color.RED);
+        Label statusLabel = new Label(hasValidPayment ? "Faol" : "Faol emas");
+        statusLabel.setStyle("-fx-font-size: 12; -fx-text-fill: " + (hasValidPayment ? "#27ae60" : "#e74c3c") + ";");
         statusBox.getChildren().addAll(statusCircle, statusLabel);
 
         Button paymentsBtn = new Button("To'lovlar");
@@ -340,13 +343,14 @@ public class StudentsController implements NavigableController {
             parentNameField.setText(student.getParentName());
             parentPhoneField.setText(student.getParentPhone());
             parentTelegramField.setText(student.getParentTelegram());
-            isActiveCheck.setSelected(student.isActive());
-            updateStatusLabel(student.isActive());
+            boolean hasValidPayment = StudentService.isStudentPaymentValid(student.getId());
+            isActiveCheck.setSelected(hasValidPayment);
+            updateStatusLabel(hasValidPayment);
             deleteBtn.setVisible(true);
             deleteBtn.setManaged(true);
         } else {
             clearStudentForm();
-            updateStatusLabel(true);
+            updateStatusLabel(false);
             deleteBtn.setVisible(false);
             deleteBtn.setManaged(false);
         }
@@ -472,9 +476,6 @@ public class StudentsController implements NavigableController {
                 telegramField.getText(), parentNameField.getText(), parentPhone,
                 parentTelegramField.getText()
             );
-            if (id != -1) {
-                StudentService.setStudentActive(id, isActiveCheck.isSelected());
-            }
         } else {
             // Update Existing
             StudentService.updateStudent(
@@ -482,9 +483,9 @@ public class StudentsController implements NavigableController {
                 phone, telegramField.getText(), parentNameField.getText(),
                 parentPhone, parentTelegramField.getText()
             );
-            StudentService.setStudentActive(selectedStudent.getId(), isActiveCheck.isSelected());
         }
         
+        StudentService.updateStudentPaymentStatus();
         loadStudents();
         closeSidebars();
     }
