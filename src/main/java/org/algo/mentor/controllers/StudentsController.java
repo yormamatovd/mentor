@@ -72,8 +72,9 @@ public class StudentsController implements NavigableController {
         setupDateSync();
         setupValidationListeners();
         
-        // Initial default values
-        paymentFromDatePicker.setValue(LocalDate.now());
+        // Initial default values - previous month
+        LocalDate firstOfPrevMonth = LocalDate.now().minusMonths(1).withDayOfMonth(1);
+        paymentFromDatePicker.setValue(firstOfPrevMonth);
     }
 
     private void setupValidationListeners() {
@@ -86,7 +87,7 @@ public class StudentsController implements NavigableController {
         // Sync 'To' date when 'From' date changes
         paymentFromDatePicker.valueProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
-                paymentToDatePicker.setValue(newVal.plusMonths(1));
+                paymentToDatePicker.setValue(newVal.withDayOfMonth(newVal.lengthOfMonth()));
             }
         });
 
@@ -381,9 +382,8 @@ public class StudentsController implements NavigableController {
         // Reset fields for new payment
         paymentAmountField.clear();
         
-        // Set default dates: Today and One month from now
-        paymentFromDatePicker.setValue(LocalDate.now());
-        paymentToDatePicker.setValue(LocalDate.now().plusMonths(1));
+        // Set default dates: previous month
+        paymentFromDatePicker.setValue(LocalDate.now().minusMonths(1).withDayOfMonth(1));
         
         loadPaymentHistory();
         
@@ -527,18 +527,25 @@ public class StudentsController implements NavigableController {
         }
 
         try {
+            // Commit any manually typed text in date pickers
+            LocalDate fromDateVal = paymentFromDatePicker.getConverter().fromString(paymentFromDatePicker.getEditor().getText());
+            LocalDate toDateVal = paymentToDatePicker.getConverter().fromString(paymentToDatePicker.getEditor().getText());
+            if (fromDateVal == null) fromDateVal = paymentFromDatePicker.getValue();
+            if (toDateVal == null) toDateVal = paymentToDatePicker.getValue();
+            if (fromDateVal == null || toDateVal == null) return;
+
             // Remove separators before parsing
             String amountText = paymentAmountField.getText().replaceAll("[^\\d]", "");
             double amount = Double.parseDouble(amountText);
-            String fromDate = paymentFromDatePicker.getValue().format(DATE_FORMAT);
-            String toDate = paymentToDatePicker.getValue().format(DATE_FORMAT);
+            String fromDate = fromDateVal.format(DATE_FORMAT);
+            String toDate = toDateVal.format(DATE_FORMAT);
 
             PaymentService.addPayment(selectedStudent.getId(), amount, fromDate, toDate);
             
             paymentAmountField.clear();
             paymentAmountField.setStyle("");
-            paymentFromDatePicker.setValue(LocalDate.now());
-            paymentToDatePicker.setValue(LocalDate.now().plusMonths(1));
+            LocalDate firstOfPrevMonth = LocalDate.now().minusMonths(1).withDayOfMonth(1);
+            paymentFromDatePicker.setValue(firstOfPrevMonth);
             
             loadPaymentHistory();
             loadStudents(); // Status might change
