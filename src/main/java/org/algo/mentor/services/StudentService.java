@@ -296,11 +296,11 @@ public class StudentService {
     public static boolean isStudentPaymentValid(int studentId) {
         try {
             Connection conn = DatabaseManager.getConnection();
-            String today = LocalDate.now().format(DATE_FORMAT);
+            String firstDayOfPreviousMonth = LocalDate.now().minusMonths(1).withDayOfMonth(1).format(DATE_FORMAT);
             String query = "SELECT COUNT(*) FROM payments WHERE student_id = ? AND payment_to_date >= ?";
             PreparedStatement pstmt = conn.prepareStatement(query);
             pstmt.setInt(1, studentId);
-            pstmt.setString(2, today);
+            pstmt.setString(2, firstDayOfPreviousMonth);
             
             ResultSet rs = pstmt.executeQuery();
             boolean hasValidPayment = false;
@@ -319,19 +319,19 @@ public class StudentService {
     public static boolean updateStudentPaymentStatus() {
         try {
             Connection conn = DatabaseManager.getConnection();
-            String today = LocalDate.now().format(DATE_FORMAT);
+            String firstDayOfPreviousMonth = LocalDate.now().minusMonths(1).withDayOfMonth(1).format(DATE_FORMAT);
 
             String activeQuery = "UPDATE students SET is_active = 1 WHERE id IN " +
                     "(SELECT DISTINCT student_id FROM payments WHERE payment_to_date >= ?)";
             PreparedStatement pstmt1 = conn.prepareStatement(activeQuery);
-            pstmt1.setString(1, today);
+            pstmt1.setString(1, firstDayOfPreviousMonth);
             pstmt1.executeUpdate();
             pstmt1.close();
 
             String inactiveQuery = "UPDATE students SET is_active = 0 WHERE id NOT IN " +
                     "(SELECT DISTINCT student_id FROM payments WHERE payment_to_date >= ?)";
             PreparedStatement pstmt2 = conn.prepareStatement(inactiveQuery);
-            pstmt2.setString(1, today);
+            pstmt2.setString(1, firstDayOfPreviousMonth);
             pstmt2.executeUpdate();
             pstmt2.close();
             
