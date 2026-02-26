@@ -140,17 +140,17 @@ public class ReportService {
     public static List<StudentStat> getStudentStatistics(int groupId, LocalDate fromDate, LocalDate toDate) {
         List<StudentStat> stats = new ArrayList<>();
         String query = "SELECT s.id, s.first_name || ' ' || s.last_name as full_name, " +
-                "COALESCE((SELECT AVG(CAST(present AS DOUBLE)) * 100 FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id AND l.group_id = ? AND l.lesson_date >= ? AND l.lesson_date <= ?), 0) as att_rate, " +
+                "COALESCE((SELECT AVG(CAST(present AS DOUBLE)) * 100 FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id AND l.group_id = ? AND DATE(l.lesson_date) >= ? AND DATE(l.lesson_date) <= ?), 0) as att_rate, " +
                 "COALESCE(" +
                 " (SELECT (SUM(earned) * 100.0 / NULLIF(SUM(total), 0)) FROM (" +
-                "   SELECT SUM(h.score) as earned, SUM(l.homework_total_score) as total FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE h.student_id = s.id AND l.group_id = ? AND l.lesson_date >= ? AND l.lesson_date <= ?" +
+                "   SELECT SUM(h.score) as earned, SUM(l.homework_total_score) as total FROM homeworks h JOIN lessons l ON h.lesson_id = l.id WHERE h.student_id = s.id AND l.group_id = ? AND DATE(l.lesson_date) >= ? AND DATE(l.lesson_date) <= ?" +
                 "   UNION ALL " +
-                "   SELECT SUM(tr.total_score) as earned, SUM(ts.total_questions) as total FROM test_results tr JOIN test_sessions ts ON tr.test_session_id = ts.id JOIN lessons l ON ts.lesson_id = l.id WHERE tr.student_id = s.id AND l.group_id = ? AND l.lesson_date >= ? AND l.lesson_date <= ?" +
+                "   SELECT SUM(tr.total_score) as earned, SUM(ts.total_questions) as total FROM test_results tr JOIN test_sessions ts ON tr.test_session_id = ts.id JOIN lessons l ON ts.lesson_id = l.id WHERE tr.student_id = s.id AND l.group_id = ? AND DATE(l.lesson_date) >= ? AND DATE(l.lesson_date) <= ?" +
                 "   UNION ALL " +
-                "   SELECT SUM(qr.total_score) as earned, SUM(qs.total_questions) as total FROM question_results qr JOIN question_sessions qs ON qr.question_session_id = qs.id JOIN lessons l ON qs.lesson_id = l.id WHERE qr.student_id = s.id AND l.group_id = ? AND l.lesson_date >= ? AND l.lesson_date <= ?" +
+                "   SELECT SUM(qr.total_score) as earned, SUM(qs.total_questions) as total FROM question_results qr JOIN question_sessions qs ON qr.question_session_id = qs.id JOIN lessons l ON qs.lesson_id = l.id WHERE qr.student_id = s.id AND l.group_id = ? AND DATE(l.lesson_date) >= ? AND DATE(l.lesson_date) <= ?" +
                 " )" +
                 "), 0) as avg_score, " +
-                "COALESCE((SELECT COUNT(*) FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id AND l.group_id = ? AND l.lesson_date >= ? AND l.lesson_date <= ? AND a.present = 0), 0) as missed_lessons " +
+                "COALESCE((SELECT COUNT(*) FROM attendance a JOIN lessons l ON a.lesson_id = l.id WHERE a.student_id = s.id AND l.group_id = ? AND DATE(l.lesson_date) >= ? AND DATE(l.lesson_date) <= ? AND a.present = 0), 0) as missed_lessons " +
                 "FROM students s " +
                 "JOIN student_groups sg ON s.id = sg.student_id " +
                 "WHERE sg.group_id = ? " +
