@@ -560,19 +560,57 @@ public class StudentsController implements NavigableController {
         ObservableList<Payment> payments = PaymentService.getPaymentsByStudentId(selectedStudent.getId());
         
         for (Payment p : payments) {
-            VBox item = new VBox(5);
+            VBox item = new VBox(4);
             item.setStyle("-fx-background-color: #ffffff; -fx-padding: 10; -fx-border-color: #dee2e6; -fx-border-radius: 5;");
-            
+
             Label amountLabel = new Label(String.format("%,.0f so'm", p.getAmount()));
             amountLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #27ae60;");
-            
+
             Label periodLabel = new Label(p.getPaymentFromDate() + " — " + p.getPaymentToDate());
             periodLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #7f8c8d;");
-            
+
             Label createdLabel = new Label("To'langan sana: " + p.getCreatedDate());
             createdLabel.setStyle("-fx-font-size: 10; -fx-text-fill: #bdc3c7;");
-            
-            item.getChildren().addAll(amountLabel, periodLabel, createdLabel);
+
+            HBox confirmRow = new HBox(6);
+            confirmRow.setAlignment(Pos.CENTER_LEFT);
+            confirmRow.setVisible(false);
+            confirmRow.setManaged(false);
+
+            Label confirmLabel = new Label("O'chirilsinmi?");
+            confirmLabel.setStyle("-fx-font-size: 11; -fx-text-fill: #e53e3e;");
+
+            Button yesBtn = new Button("Ha");
+            yesBtn.setStyle("-fx-background-color: #e53e3e; -fx-text-fill: white; -fx-font-size: 10; -fx-padding: 2 8; -fx-background-radius: 4; -fx-cursor: hand;");
+
+            Button noBtn = new Button("Yo'q");
+            noBtn.setStyle("-fx-background-color: #e2e8f0; -fx-text-fill: #4a5568; -fx-font-size: 10; -fx-padding: 2 8; -fx-background-radius: 4; -fx-cursor: hand;");
+
+            confirmRow.getChildren().addAll(confirmLabel, yesBtn, noBtn);
+
+            Button deleteBtn = new Button("O'chirish");
+            deleteBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #a0aec0; -fx-font-size: 10; -fx-cursor: hand; -fx-padding: 0;");
+            deleteBtn.setOnAction(e -> {
+                confirmRow.setVisible(true);
+                confirmRow.setManaged(true);
+                deleteBtn.setVisible(false);
+                deleteBtn.setManaged(false);
+            });
+
+            yesBtn.setOnAction(e -> {
+                PaymentService.deletePayment(p.getId());
+                loadPaymentHistory();
+                loadStudents();
+            });
+
+            noBtn.setOnAction(e -> {
+                confirmRow.setVisible(false);
+                confirmRow.setManaged(false);
+                deleteBtn.setVisible(true);
+                deleteBtn.setManaged(true);
+            });
+
+            item.getChildren().addAll(amountLabel, periodLabel, createdLabel, deleteBtn, confirmRow);
             paymentsHistoryVBox.getChildren().add(item);
         }
     }
