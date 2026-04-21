@@ -185,6 +185,16 @@ public class DatabaseManager {
                     "UNIQUE(group_id, day_of_week)" +
                     ")");
 
+            stmt.execute("CREATE TABLE IF NOT EXISTS monthly_payments (" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "student_id INTEGER NOT NULL," +
+                    "year INTEGER NOT NULL," +
+                    "month INTEGER NOT NULL," +
+                    "payment_day INTEGER NOT NULL," +
+                    "FOREIGN KEY(student_id) REFERENCES students(id)," +
+                    "UNIQUE(student_id, year, month, payment_day)" +
+                    ")");
+
             logger.info("Database tables created successfully");
         } catch (SQLException e) {
             logger.error("Failed to create database tables", e);

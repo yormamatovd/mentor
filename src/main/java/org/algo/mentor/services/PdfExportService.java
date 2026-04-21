@@ -14,6 +14,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.WritableImage;
 import org.algo.mentor.models.Schedule;
 import org.algo.mentor.models.Student;
+import org.algo.mentor.services.PaymentService;
 
 import javax.imageio.ImageIO;
 import java.io.ByteArrayOutputStream;
@@ -332,5 +333,54 @@ public class PdfExportService {
             case 7 -> "Yakshanba";
             default -> "";
         };
+    }
+
+    public static void exportGroupStudentList(String groupName, List<Student> students, File file) throws IOException {
+        PdfWriter writer = new PdfWriter(file);
+        PdfDocument pdf = new PdfDocument(writer);
+        Document document = new Document(pdf);
+
+        document.add(new Paragraph(groupName + " o'quvchilar ro'yxati")
+                .setFontSize(18)
+                .setBold()
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginBottom(5));
+
+        document.add(new Paragraph("Sana: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")))
+                .setFontSize(10)
+                .setTextAlignment(TextAlignment.RIGHT)
+                .setMarginBottom(15));
+
+        float[] cols = {0.5f, 2.5f, 2f, 2f, 1f};
+        Table table = new Table(UnitValue.createPercentArray(cols));
+        table.setWidth(UnitValue.createPercentValue(100));
+
+        table.addHeaderCell(createHeaderCell("Tr"));
+        table.addHeaderCell(createHeaderCell("Ism Familiya"));
+        table.addHeaderCell(createHeaderCell("Otasini telefon raqami"));
+        table.addHeaderCell(createHeaderCell("Onasini telefon raqami"));
+        table.addHeaderCell(createHeaderCell("Necha oy o'qigan"));
+
+        DeviceRgb lightGray = new DeviceRgb(247, 250, 252);
+        DeviceRgb white = new DeviceRgb(255, 255, 255);
+
+        for (int i = 0; i < students.size(); i++) {
+            Student s = students.get(i);
+            DeviceRgb rowColor = i % 2 == 1 ? lightGray : white;
+
+            int monthsCount = PaymentService.countMonthlyPaymentsForStudent(s.getId());
+
+            String fatherPhone = s.getPhone() != null && !s.getPhone().isBlank() ? s.getPhone() : "---";
+            String motherPhone = s.getParentPhone() != null && !s.getParentPhone().isBlank() ? s.getParentPhone() : "---";
+
+            table.addCell(new Cell().add(new Paragraph(String.valueOf(i + 1))).setBackgroundColor(rowColor).setTextAlignment(TextAlignment.CENTER).setFontSize(10));
+            table.addCell(new Cell().add(new Paragraph(s.getFirstName() + " " + s.getLastName())).setBackgroundColor(rowColor).setFontSize(10));
+            table.addCell(new Cell().add(new Paragraph(fatherPhone)).setBackgroundColor(rowColor).setFontSize(10).setTextAlignment(TextAlignment.CENTER));
+            table.addCell(new Cell().add(new Paragraph(motherPhone)).setBackgroundColor(rowColor).setFontSize(10).setTextAlignment(TextAlignment.CENTER));
+            table.addCell(new Cell().add(new Paragraph(monthsCount > 0 ? String.valueOf(monthsCount) : "")).setBackgroundColor(rowColor).setFontSize(10).setTextAlignment(TextAlignment.CENTER));
+        }
+
+        document.add(table);
+        document.close();
     }
 }

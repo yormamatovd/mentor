@@ -75,6 +75,7 @@ public class MainController {
             {"O'quvchilar", "students-view.fxml", "StudentsController"},
             {"Guruhlar", "groups-view.fxml", "GroupsController"},
             {"Darslar", "lessons-view.fxml", "LessonsController"},
+            {"To'lovlar", "payments-view.fxml", "PaymentsController"},
             {"Hisobotlar", "reports-view.fxml", "ReportsController"},
             {"Dars jadvali", "schedule-view.fxml", "ScheduleController"}
         };

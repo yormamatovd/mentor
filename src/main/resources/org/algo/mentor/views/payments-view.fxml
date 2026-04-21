@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="org.algo.mentor.controllers.PaymentsController"
+      stylesheets="@../styles/custom.css"
+      spacing="20.0"
+      style="-fx-background-color: #f8f9fc;">
+    <padding>
+        <Insets bottom="25.0" left="25.0" right="25.0" top="25.0"/>
+    </padding>
+
+    <!-- Header -->
+    <HBox alignment="CENTER_LEFT" spacing="20.0">
+        <VBox spacing="5.0">
+            <Label text="To'lovlar" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+            <Label text="Guruh bo'yicha oylik to'lovlarni belgilash" style="-fx-text-fill: #718096; -fx-font-size: 13;"/>
+        </VBox>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="exportPdfBtn" text="PDF ro'yxat" onAction="#onExportPdfClick"
+                style="-fx-background-color: #e53e3e; -fx-text-fill: white; -fx-padding: 10 20; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: bold;"/>
+    </HBox>
+
+    <!-- Group + Year selector -->
+    <HBox spacing="20.0" alignment="CENTER_LEFT"
+          style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: #edf2f7; -fx-border-radius: 10;">
+        <Label text="Guruh:" style="-fx-font-size: 14; -fx-text-fill: #475569; -fx-font-weight: bold;"/>
+        <ComboBox fx:id="groupComboBox" promptText="Guruhni tanlang..." prefWidth="250"
+                  onAction="#onGroupSelected" styleClass="form-control"/>
+        <Label text="O'quv yili:" style="-fx-font-size: 14; -fx-text-fill: #475569; -fx-font-weight: bold;"/>
+        <ComboBox fx:id="yearComboBox" prefWidth="160"
+                  onAction="#onYearSelected" styleClass="form-control"/>
+    </HBox>
+
+    <!-- Payment table area -->
+    <ScrollPane fitToHeight="false" fitToWidth="true" VBox.vgrow="ALWAYS"
+                style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+        <VBox fx:id="tableContainer" spacing="0"/>
+    </ScrollPane>
+</VBox>

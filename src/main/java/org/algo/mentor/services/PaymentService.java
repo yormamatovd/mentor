@@ -153,4 +153,94 @@ public class PaymentService {
                 rs.getString("created_date")
         );
     }
+
+    public static boolean isMonthlyPaymentExists(int studentId, int year, int month, int paymentDay) {
+        try {
+            Connection conn = DatabaseManager.getConnection();
+            String query = "SELECT COUNT(*) FROM monthly_payments WHERE student_id=? AND year=? AND month=? AND payment_day=?";
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            pstmt.setInt(1, studentId);
+            pstmt.setInt(2, year);
+            pstmt.setInt(3, month);
+            pstmt.setInt(4, paymentDay);
+            ResultSet rs = pstmt.executeQuery();
+            boolean exists = rs.next() && rs.getInt(1) > 0;
+            rs.close();
+            pstmt.close();
+            return exists;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static void toggleMonthlyPayment(int studentId, int year, int month, int paymentDay) {
+        try {
+            Connection conn = DatabaseManager.getConnection();
+            if (isMonthlyPaymentExists(studentId, year, month, paymentDay)) {
+                String query = "DELETE FROM monthly_payments WHERE student_id=? AND year=? AND month=? AND payment_day=?";
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                pstmt.setInt(1, studentId);
+                pstmt.setInt(2, year);
+                pstmt.setInt(3, month);
+                pstmt.setInt(4, paymentDay);
+                pstmt.executeUpdate();
+                pstmt.close();
+            } else {
+                String query = "INSERT INTO monthly_payments (student_id, year, month, payment_day) VALUES (?,?,?,?)";
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                pstmt.setInt(1, studentId);
+                pstmt.setInt(2, year);
+                pstmt.setInt(3, month);
+                pstmt.setInt(4, paymentDay);
+                pstmt.executeUpdate();
+                pstmt.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static int countMonthlyPaymentsForStudent(int studentId) {
+        try {
+            Connection conn = DatabaseManager.getConnection();
+            String query = "SELECT COUNT(*) FROM monthly_payments WHERE student_id=?";
+            PreparedStatement pstmt = conn.prepareStatement(query);
+            pstmt.setInt(1, studentId);
+            ResultSet rs = pstmt.executeQuery();
+            int count = rs.next() ? rs.getInt(1) : 0;
+            rs.close();
+            pstmt.close();
+            return count;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    public static java.util.Set<String> getMonthlyPaymentKeysForStudents(java.util.List<Integer> studentIds) {
+        java.util.Set<String> keys = new java.util.HashSet<>();
+        if (studentIds == null || studentIds.isEmpty()) return keys;
+        try {
+            Connection conn = DatabaseManager.getConnection();
+            StringBuilder sb = new StringBuilder("SELECT student_id, year, month, payment_day FROM monthly_payments WHERE student_id IN (");
+            for (int i = 0; i < studentIds.size(); i++) {
+                sb.append(i == 0 ? "?" : ",?");
+            }
+            sb.append(")");
+            PreparedStatement pstmt = conn.prepareStatement(sb.toString());
+            for (int i = 0; i < studentIds.size(); i++) {
+                pstmt.setInt(i + 1, studentIds.get(i));
+            }
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                keys.add(rs.getInt("student_id") + "_" + rs.getInt("year") + "_" + rs.getInt("month") + "_" + rs.getInt("payment_day"));
+            }
+            rs.close();
+            pstmt.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return keys;
+    }
 }
