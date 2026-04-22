@@ -16,6 +16,8 @@ import org.algo.mentor.services.PaymentService;
 import org.algo.mentor.services.PdfExportService;
 import org.algo.mentor.services.StudentService;
 
+import javafx.scene.input.ScrollEvent;
+
 import java.io.File;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -27,7 +29,6 @@ public class PaymentsController implements NavigableController {
 
     @FXML private ComboBox<Group> groupComboBox;
     @FXML private ComboBox<String> yearComboBox;
-    @FXML private VBox tableContainer;
     @FXML private ScrollPane outerScrollPane;
     @FXML private Button exportPdfBtn;
 
@@ -67,13 +68,22 @@ public class PaymentsController implements NavigableController {
 
         months = buildMonths(selectedStartYear);
 
-        outerScrollPane.setOnScroll(event -> {
-            if (event.getDeltaY() == 0) return;
-            double contentH = tableContainer.getBoundsInLocal().getHeight();
-            double viewportH = outerScrollPane.getViewportBounds().getHeight();
-            if (contentH <= viewportH) return;
-            double shift = -event.getDeltaY() * 3.0 / (contentH - viewportH);
-            outerScrollPane.setVvalue(Math.max(0, Math.min(1, outerScrollPane.getVvalue() + shift)));
+        outerScrollPane.addEventFilter(ScrollEvent.SCROLL, event -> {
+            javafx.scene.Node content = outerScrollPane.getContent();
+            if (content == null) return;
+            double contentW = content.getBoundsInLocal().getWidth();
+            double contentH = content.getBoundsInLocal().getHeight();
+            double vpW = outerScrollPane.getViewportBounds().getWidth();
+            double vpH = outerScrollPane.getViewportBounds().getHeight();
+
+            if (event.getDeltaX() != 0 && contentW > vpW) {
+                double shift = -event.getDeltaX() * 3.0 / (contentW - vpW);
+                outerScrollPane.setHvalue(Math.max(0, Math.min(1, outerScrollPane.getHvalue() + shift)));
+            }
+            if (event.getDeltaY() != 0 && contentH > vpH) {
+                double shift = -event.getDeltaY() * 3.0 / (contentH - vpH);
+                outerScrollPane.setVvalue(Math.max(0, Math.min(1, outerScrollPane.getVvalue() + shift)));
+            }
             event.consume();
         });
 
@@ -117,13 +127,13 @@ public class PaymentsController implements NavigableController {
     }
 
     private void buildPaymentTable(Group group) {
-        tableContainer.getChildren().clear();
+        outerScrollPane.setContent(null);
 
         ObservableList<Student> students = StudentService.getStudentsByGroup(group.getId());
         if (students.isEmpty()) {
             Label empty = new Label("Bu guruhda o'quvchi yo'q");
             empty.setStyle("-fx-text-fill: #718096; -fx-font-size: 14; -fx-padding: 20;");
-            tableContainer.getChildren().add(empty);
+            outerScrollPane.setContent(empty);
             return;
         }
 
@@ -142,26 +152,11 @@ public class PaymentsController implements NavigableController {
             table.getChildren().add(buildDataRow(si + 1, s, even, paidKeys));
         }
 
-        ScrollPane hScroll = new ScrollPane(table);
-        hScroll.setFitToHeight(true);
-        hScroll.setFitToWidth(false);
-        hScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        hScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        hScroll.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
-        hScroll.setOnScroll(event -> {
-            double deltaX = event.getDeltaX();
-            if (deltaX == 0) return;
-            double contentWidth = table.getBoundsInLocal().getWidth();
-            double viewportWidth = hScroll.getViewportBounds().getWidth();
-            if (contentWidth <= viewportWidth) return;
-            double scrollable = contentWidth - viewportWidth;
-            double shift = -deltaX * 3.0 / scrollable;
-            hScroll.setHvalue(Math.max(0, Math.min(1, hScroll.getHvalue() + shift)));
-            event.consume();
-        });
-
-        VBox.setVgrow(hScroll, Priority.ALWAYS);
-        tableContainer.getChildren().add(hScroll);
+        outerScrollPane.setContent(table);
+        outerScrollPane.setFitToWidth(false);
+        outerScrollPane.setFitToHeight(false);
+        outerScrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        outerScrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
     }
 
     private HBox buildHeaderRow() {
@@ -337,7 +332,7 @@ public class PaymentsController implements NavigableController {
         chooser.setInitialFileName(selected.getName() + "_royxat.pdf");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF fayllar", "*.pdf"));
 
-        File file = chooser.showSaveDialog(tableContainer.getScene().getWindow());
+        File file = chooser.showSaveDialog(outerScrollPane.getScene().getWindow());
         if (file == null) return;
 
         ObservableList<Student> students = StudentService.getStudentsByGroup(selected.getId());

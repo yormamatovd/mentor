@@ -123,7 +123,13 @@ public class PdfExportService {
             else statusCell.setFontColor(new DeviceRgb(229, 62, 62));
             detailsTable.addCell(statusCell);
             
-            detailsTable.addCell(new Cell().add(new Paragraph(row.scoreType())).setFontSize(9).setBackgroundColor(rowColor));
+            String type = row.scoreType();
+            String topic = row.topic();
+            String typeDisplayText = type;
+            if ("Test".equals(type) && topic != null && !topic.isEmpty() && !topic.equals("-") && !topic.equals("Test")) {
+                typeDisplayText = type + " (" + topic + ")";
+            }
+            detailsTable.addCell(new Cell().add(new Paragraph(typeDisplayText)).setFontSize(9).setBackgroundColor(rowColor));
             
             String totalText = (row.totalValue() != null && row.totalValue() > 0) ? String.format("%.1f", row.totalValue()) : "-";
             String resultText = row.score() == null ? "-" : String.format("%.1f", row.score());

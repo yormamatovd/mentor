@@ -36,8 +36,6 @@
     </HBox>
 
     <!-- Payment table area -->
-    <ScrollPane fx:id="outerScrollPane" fitToHeight="false" fitToWidth="true" VBox.vgrow="ALWAYS"
-                style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
-        <VBox fx:id="tableContainer" spacing="0"/>
-    </ScrollPane>
+    <ScrollPane fx:id="outerScrollPane" fitToHeight="false" fitToWidth="false" VBox.vgrow="ALWAYS"
+                style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;"/>
 </VBox>

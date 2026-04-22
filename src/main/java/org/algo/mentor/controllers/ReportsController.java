@@ -213,7 +213,14 @@ public class ReportsController implements NavigableController {
         });
         
         attStatusCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().status()));
-        scoreTypeCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().scoreType()));
+        scoreTypeCol.setCellValueFactory(cd -> {
+            String type = cd.getValue().scoreType();
+            String topic = cd.getValue().topic();
+            if ("Test".equals(type) && topic != null && !topic.isEmpty() && !topic.equals("-") && !topic.equals("Test")) {
+                return new ReadOnlyObjectWrapper<>(type + " (" + topic + ")");
+            }
+            return new ReadOnlyObjectWrapper<>(type);
+        });
         attTotalCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().totalValue()));
         attResultCol.setCellValueFactory(cd -> new ReadOnlyObjectWrapper<>(cd.getValue().score()));
         
