@@ -28,6 +28,7 @@ public class PaymentsController implements NavigableController {
     @FXML private ComboBox<Group> groupComboBox;
     @FXML private ComboBox<String> yearComboBox;
     @FXML private VBox tableContainer;
+    @FXML private ScrollPane outerScrollPane;
     @FXML private Button exportPdfBtn;
 
     private NavigationController navigationController;
@@ -65,6 +66,16 @@ public class PaymentsController implements NavigableController {
         yearComboBox.setValue(String.valueOf(selectedStartYear < 2026 ? 2026 : Math.min(selectedStartYear, 2035)));
 
         months = buildMonths(selectedStartYear);
+
+        outerScrollPane.setOnScroll(event -> {
+            if (event.getDeltaY() == 0) return;
+            double contentH = tableContainer.getBoundsInLocal().getHeight();
+            double viewportH = outerScrollPane.getViewportBounds().getHeight();
+            if (contentH <= viewportH) return;
+            double shift = -event.getDeltaY() * 3.0 / (contentH - viewportH);
+            outerScrollPane.setVvalue(Math.max(0, Math.min(1, outerScrollPane.getVvalue() + shift)));
+            event.consume();
+        });
 
         ObservableList<Group> groups = GroupService.getAllGroups();
         groupComboBox.setItems(groups);
@@ -139,14 +150,12 @@ public class PaymentsController implements NavigableController {
         hScroll.setStyle("-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;");
         hScroll.setOnScroll(event -> {
             double deltaX = event.getDeltaX();
-            double deltaY = event.getDeltaY();
-            double delta = deltaX != 0 ? deltaX : deltaY;
-            if (delta == 0) return;
+            if (deltaX == 0) return;
             double contentWidth = table.getBoundsInLocal().getWidth();
             double viewportWidth = hScroll.getViewportBounds().getWidth();
             if (contentWidth <= viewportWidth) return;
             double scrollable = contentWidth - viewportWidth;
-            double shift = -delta * 3.0 / scrollable;
+            double shift = -deltaX * 3.0 / scrollable;
             hScroll.setHvalue(Math.max(0, Math.min(1, hScroll.getHvalue() + shift)));
             event.consume();
         });
