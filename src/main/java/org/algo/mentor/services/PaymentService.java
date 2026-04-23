@@ -143,6 +143,55 @@ public class PaymentService {
         return null;
     }
 
+    private static final String[] MONTH_NAMES = {
+        "Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun",
+        "Iyul", "Avgust", "Sentabr", "Oktyabr", "Noyabr", "Dekabr"
+    };
+
+    public static java.util.Map<Integer, java.util.List<String>> getAllStudentPayments() {
+        java.util.Map<Integer, java.util.List<String>> paymentsMap = new java.util.HashMap<>();
+        try {
+            Connection conn = DatabaseManager.getConnection();
+            
+            // 1. Get official payments from 'payments' table
+            String query1 = "SELECT student_id, payment_from_date FROM payments ORDER BY payment_from_date DESC";
+            Statement stmt1 = conn.createStatement();
+            ResultSet rs1 = stmt1.executeQuery(query1);
+            while (rs1.next()) {
+                int studentId = rs1.getInt("student_id");
+                String date = rs1.getString("payment_from_date");
+                paymentsMap.computeIfAbsent(studentId, k -> new java.util.ArrayList<>()).add(date);
+            }
+            rs1.close();
+            stmt1.close();
+
+            // 2. Get monthly marks from 'monthly_payments' table
+            String query2 = "SELECT student_id, year, month, payment_day FROM monthly_payments ORDER BY year DESC, month DESC, payment_day DESC";
+            Statement stmt2 = conn.createStatement();
+            ResultSet rs2 = stmt2.executeQuery(query2);
+            while (rs2.next()) {
+                int studentId = rs2.getInt("student_id");
+                int year = rs2.getInt("year");
+                int month = rs2.getInt("month");
+                int day = rs2.getInt("payment_day");
+                
+                String monthName = (month >= 1 && month <= 12) ? MONTH_NAMES[month - 1] : String.valueOf(month);
+                String mark = String.format("%d %s %d", year, monthName, day);
+                
+                java.util.List<String> list = paymentsMap.computeIfAbsent(studentId, k -> new java.util.ArrayList<>());
+                if (!list.contains(mark)) {
+                    list.add(mark);
+                }
+            }
+            rs2.close();
+            stmt2.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return paymentsMap;
+    }
+
     private static Payment createPaymentFromResultSet(ResultSet rs) throws SQLException {
         return new Payment(
                 rs.getInt("id"),

@@ -389,4 +389,55 @@ public class PdfExportService {
         document.add(table);
         document.close();
     }
+
+    public static void exportAllStudentsList(List<Student> students, java.util.Map<Integer, List<String>> paymentsMap, File file) throws IOException {
+        PdfWriter writer = new PdfWriter(file);
+        PdfDocument pdf = new PdfDocument(writer);
+        Document document = new Document(pdf);
+
+        document.add(new Paragraph("Barcha o'quvchilar ro'yxati")
+                .setFontSize(18)
+                .setBold()
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginBottom(5));
+
+        document.add(new Paragraph("Sana: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy")))
+                .setFontSize(10)
+                .setTextAlignment(TextAlignment.RIGHT)
+                .setMarginBottom(15));
+
+        float[] cols = {0.5f, 2f, 1.5f, 1.5f, 1.5f, 1.5f, 2f};
+        Table table = new Table(UnitValue.createPercentArray(cols));
+        table.setWidth(UnitValue.createPercentValue(100));
+
+        table.addHeaderCell(createHeaderCell("Tr"));
+        table.addHeaderCell(createHeaderCell("O'quvchi ismi"));
+        table.addHeaderCell(createHeaderCell("Tel nomeri"));
+        table.addHeaderCell(createHeaderCell("Ota-ona ismi"));
+        table.addHeaderCell(createHeaderCell("Ota-ona tel"));
+        table.addHeaderCell(createHeaderCell("Telegram"));
+        table.addHeaderCell(createHeaderCell("To'lov sanalari"));
+
+        DeviceRgb lightGray = new DeviceRgb(247, 250, 252);
+        DeviceRgb white = new DeviceRgb(255, 255, 255);
+
+        for (int i = 0; i < students.size(); i++) {
+            Student s = students.get(i);
+            DeviceRgb rowColor = i % 2 == 1 ? lightGray : white;
+
+            List<String> dates = paymentsMap.getOrDefault(s.getId(), java.util.Collections.emptyList());
+            String paymentsStr = String.join(", ", dates);
+
+            table.addCell(new Cell().add(new Paragraph(String.valueOf(i + 1))).setBackgroundColor(rowColor).setTextAlignment(TextAlignment.CENTER).setFontSize(8));
+            table.addCell(new Cell().add(new Paragraph(s.getFirstName() + " " + s.getLastName())).setBackgroundColor(rowColor).setFontSize(8));
+            table.addCell(new Cell().add(new Paragraph(s.getPhone() != null ? s.getPhone() : "")).setBackgroundColor(rowColor).setFontSize(8));
+            table.addCell(new Cell().add(new Paragraph(s.getParentName() != null ? s.getParentName() : "")).setBackgroundColor(rowColor).setFontSize(8));
+            table.addCell(new Cell().add(new Paragraph(s.getParentPhone() != null ? s.getParentPhone() : "")).setBackgroundColor(rowColor).setFontSize(8));
+            table.addCell(new Cell().add(new Paragraph(s.getTelegramUsername() != null ? s.getTelegramUsername() : "")).setBackgroundColor(rowColor).setFontSize(8));
+            table.addCell(new Cell().add(new Paragraph(paymentsStr)).setBackgroundColor(rowColor).setFontSize(8));
+        }
+
+        document.add(table);
+        document.close();
+    }
 }

@@ -10,53 +10,84 @@
            stylesheets="@../styles/custom.css">
     
     <!-- Main Content -->
-    <VBox spacing="20.0" style="-fx-background-color: #f8f9fc;">
-        <padding>
-            <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
-        </padding>
-        
-        <!-- Header & Add Button -->
-        <HBox alignment="CENTER_LEFT" spacing="20.0">
-            <VBox spacing="5.0">
-                <Label text="O'quvchilarni boshqarish" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
-                <Label text="O'quvchilar ro'yxati va ularning holati" style="-fx-font-size: 13; -fx-text-fill: #718096;"/>
-            </VBox>
-            <Region HBox.hgrow="ALWAYS" />
-            <Button text="+ Yangi o'quvchi" onAction="#onAddStudentClick" styleClass="btn, btn-primary"/>
-        </HBox>
-        
-        <!-- Filter Bar -->
-        <HBox spacing="15.0" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 0); -fx-border-color: #edf2f7; -fx-border-radius: 10;">
-            <VBox spacing="5.0">
-                <Label text="Ism yoki Familya" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
-                <TextField fx:id="nameFilterField" promptText="Qidirish..." prefWidth="250.0" styleClass="form-control"/>
-            </VBox>
-            
-            <VBox spacing="5.0">
-                <Label text="Telefon" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
-                <TextField fx:id="phoneFilterField" promptText="+998..." prefWidth="180.0" styleClass="form-control"/>
-            </VBox>
-            
-            <VBox spacing="5.0">
-                <Label text="Holati" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
-                <ComboBox fx:id="statusFilterCombo" prefWidth="150.0" styleClass="form-control"/>
-            </VBox>
-            
-            <VBox spacing="5.0">
-                <Label text="Guruh" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
-                <ComboBox fx:id="groupFilterCombo" prefWidth="220.0" styleClass="form-control"/>
-            </VBox>
-        </HBox>
-        
-        <!-- Student Cards List -->
-        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
-            <FlowPane fx:id="studentsFlowPane" hgap="20.0" vgap="20.0">
+    <TabPane fx:id="studentsTabPane" style="-fx-background-color: #f8f9fc;" tabClosingPolicy="UNAVAILABLE">
+        <Tab text="Filtrli ko'rinish">
+            <VBox spacing="20.0" style="-fx-background-color: #f8f9fc;">
                 <padding>
-                    <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                    <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
                 </padding>
-            </FlowPane>
-        </ScrollPane>
-    </VBox>
+                
+                <!-- Header & Add Button -->
+                <HBox alignment="CENTER_LEFT" spacing="20.0">
+                    <VBox spacing="5.0">
+                        <Label text="O'quvchilarni boshqarish" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+                        <Label text="O'quvchilar ro'yxati va ularning holati" style="-fx-font-size: 13; -fx-text-fill: #718096;"/>
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="+ Yangi o'quvchi" onAction="#onAddStudentClick" styleClass="btn, btn-primary"/>
+                </HBox>
+                
+                <!-- Filter Bar -->
+                <HBox spacing="15.0" alignment="CENTER_LEFT" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 10, 0, 0, 0); -fx-border-color: #edf2f7; -fx-border-radius: 10;">
+                    <VBox spacing="5.0">
+                        <Label text="Ism yoki Familya" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
+                        <TextField fx:id="nameFilterField" promptText="Qidirish..." prefWidth="250.0" styleClass="form-control"/>
+                    </VBox>
+                    
+                    <VBox spacing="5.0">
+                        <Label text="Telefon" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
+                        <TextField fx:id="phoneFilterField" promptText="+998..." prefWidth="180.0" styleClass="form-control"/>
+                    </VBox>
+                    
+                    <VBox spacing="5.0">
+                        <Label text="Holati" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
+                        <ComboBox fx:id="statusFilterCombo" prefWidth="150.0" styleClass="form-control"/>
+                    </VBox>
+                    
+                    <VBox spacing="5.0">
+                        <Label text="Guruh" style="-fx-font-size: 12; -fx-text-fill: #718096;"/>
+                        <ComboBox fx:id="groupFilterCombo" prefWidth="220.0" styleClass="form-control"/>
+                    </VBox>
+                </HBox>
+                
+                <!-- Student Cards List -->
+                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+                    <FlowPane fx:id="studentsFlowPane" hgap="20.0" vgap="20.0">
+                        <padding>
+                            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+                        </padding>
+                    </FlowPane>
+                </ScrollPane>
+            </VBox>
+        </Tab>
+        <Tab text="Barcha o'quvchilar">
+            <VBox spacing="20.0" style="-fx-background-color: #f8f9fc;">
+                <padding>
+                    <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+                </padding>
+                
+                <HBox alignment="CENTER_LEFT" spacing="20.0">
+                    <VBox spacing="5.0">
+                        <Label text="Barcha o'quvchilar ro'yxati" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #2d3748;"/>
+                        <Label text="Ism bo'yicha saralangan to'liq ro'yxat" style="-fx-font-size: 13; -fx-text-fill: #718096;"/>
+                    </VBox>
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="PDF Export" onAction="#onExportAllStudentsPdfClick" styleClass="btn, btn-info"/>
+                </HBox>
+                
+                <TableView fx:id="allStudentsTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+                    <columns>
+                        <TableColumn fx:id="nameCol" text="O'quvchi ismi" prefWidth="180.0"/>
+                        <TableColumn fx:id="phoneCol" text="Tel nomeri" prefWidth="150.0"/>
+                        <TableColumn fx:id="parentNameCol" text="Ota-ona ismi" prefWidth="150.0"/>
+                        <TableColumn fx:id="parentPhoneCol" text="Ota-ona nomeri" prefWidth="150.0"/>
+                        <TableColumn fx:id="telegramCol" text="Telegram" prefWidth="120.0"/>
+                        <TableColumn fx:id="paymentsCol" text="To'lov sanalari" prefWidth="180.0"/>
+                    </columns>
+                </TableView>
+            </VBox>
+        </Tab>
+    </TabPane>
     
     <!-- Overlay for sidebars -->
     <Pane fx:id="overlayPane" visible="false" onMouseClicked="#closeSidebars" style="-fx-background-color: rgba(0,0,0,0.3);"/>

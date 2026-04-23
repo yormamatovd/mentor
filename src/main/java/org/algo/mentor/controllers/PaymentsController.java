@@ -141,6 +141,8 @@ public class PaymentsController implements NavigableController {
         for (Student s : students) studentIds.add(s.getId());
         Set<String> paidKeys = PaymentService.getMonthlyPaymentKeysForStudents(studentIds);
 
+        sortStudentsByPaymentDay(students, paidKeys);
+
         VBox table = new VBox(0);
         table.setStyle("-fx-background-color: white; -fx-border-color: #e2e8f0; -fx-border-radius: 10; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 8, 0, 0, 2);");
 
@@ -319,6 +321,33 @@ public class PaymentsController implements NavigableController {
         }
     }
 
+    private void sortStudentsByPaymentDay(ObservableList<Student> students, Set<String> paidKeys) {
+        students.sort((s1, s2) -> {
+            int p1 = getStudentPaymentPriority(s1.getId(), paidKeys);
+            int p2 = getStudentPaymentPriority(s2.getId(), paidKeys);
+            if (p1 != p2) return Integer.compare(p1, p2);
+            return (s1.getFirstName() + " " + s1.getLastName()).compareTo(s2.getFirstName() + " " + s2.getLastName());
+        });
+    }
+
+    private int getStudentPaymentPriority(int studentId, Set<String> paidKeys) {
+        boolean hasDay1 = false;
+        boolean hasDay15 = false;
+        String idPrefix = studentId + "_";
+        for (String key : paidKeys) {
+            if (key.startsWith(idPrefix)) {
+                if (key.endsWith("_1")) {
+                    hasDay1 = true;
+                    break;
+                }
+                if (key.endsWith("_15")) hasDay15 = true;
+            }
+        }
+        if (hasDay1) return 1;
+        if (hasDay15) return 2;
+        return 3;
+    }
+
     @FXML
     private void onExportPdfClick() {
         Group selected = groupComboBox.getValue();
@@ -336,6 +365,11 @@ public class PaymentsController implements NavigableController {
         if (file == null) return;
 
         ObservableList<Student> students = StudentService.getStudentsByGroup(selected.getId());
+        List<Integer> ids = new ArrayList<>();
+        for (Student s : students) ids.add(s.getId());
+        Set<String> keys = PaymentService.getMonthlyPaymentKeysForStudents(ids);
+        sortStudentsByPaymentDay(students, keys);
+
         try {
             PdfExportService.exportGroupStudentList(selected.getName(), students, file);
             new Alert(Alert.AlertType.INFORMATION, "PDF muvaffaqiyatli saqlandi!", ButtonType.OK).showAndWait();

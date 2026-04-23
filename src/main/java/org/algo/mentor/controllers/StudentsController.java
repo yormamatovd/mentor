@@ -34,6 +34,16 @@ public class StudentsController implements NavigableController {
     @FXML private ComboBox<String> statusFilterCombo;
     @FXML private ComboBox<String> groupFilterCombo;
     @FXML private FlowPane studentsFlowPane;
+    @FXML private TabPane studentsTabPane;
+    
+    // All Students Tab
+    @FXML private TableView<StudentWithPayments> allStudentsTable;
+    @FXML private TableColumn<StudentWithPayments, String> nameCol;
+    @FXML private TableColumn<StudentWithPayments, String> phoneCol;
+    @FXML private TableColumn<StudentWithPayments, String> parentNameCol;
+    @FXML private TableColumn<StudentWithPayments, String> parentPhoneCol;
+    @FXML private TableColumn<StudentWithPayments, String> telegramCol;
+    @FXML private TableColumn<StudentWithPayments, ComboBox<String>> paymentsCol;
     
     // Student Sidebar
     @FXML private VBox studentSidebar;
@@ -71,10 +81,111 @@ public class StudentsController implements NavigableController {
         setupEscKeyHandler();
         setupDateSync();
         setupValidationListeners();
+        setupAllStudentsTable();
         
+        studentsTabPane.getSelectionModel().selectedIndexProperty().addListener((obs, old, newVal) -> {
+            if (newVal.intValue() == 1) {
+                loadAllStudents();
+            }
+        });
+
         // Initial default values - previous month
         LocalDate firstOfPrevMonth = LocalDate.now().minusMonths(1).withDayOfMonth(1);
         paymentFromDatePicker.setValue(firstOfPrevMonth);
+    }
+
+    private void setupAllStudentsTable() {
+        nameCol.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getName()));
+        phoneCol.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getPhone()));
+        parentNameCol.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getParentName()));
+        parentPhoneCol.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getParentPhone()));
+        telegramCol.setCellValueFactory(cell -> new javafx.beans.property.SimpleStringProperty(cell.getValue().getTelegram()));
+        paymentsCol.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("paymentsCombo"));
+    }
+
+    private void loadAllStudents() {
+        ObservableList<Student> allStudents = StudentService.getAllStudents();
+        // Sort by name (StudentService might already do this, but let's be sure)
+        allStudents.sort((s1, s2) -> (s1.getFirstName() + " " + s1.getLastName()).compareToIgnoreCase(s2.getFirstName() + " " + s2.getLastName()));
+        
+        java.util.Map<Integer, java.util.List<String>> paymentsMap = PaymentService.getAllStudentPayments();
+        
+        ObservableList<StudentWithPayments> data = FXCollections.observableArrayList();
+        for (Student s : allStudents) {
+            java.util.List<String> dates = paymentsMap.getOrDefault(s.getId(), new java.util.ArrayList<>());
+            
+            // Sort dates descending
+            dates.sort((d1, d2) -> {
+                try {
+                    // Try to parse both as dates or just compare as strings if custom format
+                    // Simple approach: if it has spaces, it's our custom "2026 Yanvar 1" format
+                    // If it has dashes, it's "2026-01-01"
+                    return comparePaymentDates(d2, d1); // Descending
+                } catch (Exception e) {
+                    return d2.compareTo(d1);
+                }
+            });
+            
+            data.add(new StudentWithPayments(s, dates));
+        }
+        allStudentsTable.setItems(data);
+    }
+
+    private int comparePaymentDates(String d1, String d2) {
+        // Basic priority: Year then Month then Day
+        // "2026 Yanvar 1" vs "2026-05-10"
+        String[] p1 = d1.split("[ -]"); // Split by space or dash
+        String[] p2 = d2.split("[ -]");
+        
+        if (p1.length < 3 || p2.length < 3) return d1.compareTo(d2);
+        
+        // Year
+        int y1 = Integer.parseInt(p1[0]);
+        int y2 = Integer.parseInt(p2[0]);
+        if (y1 != y2) return Integer.compare(y1, y2);
+        
+        // Month
+        int m1 = getMonthNumber(p1[1]);
+        int m2 = getMonthNumber(p2[1]);
+        if (m1 != m2) return Integer.compare(m1, m2);
+        
+        // Day
+        int day1 = Integer.parseInt(p1[2]);
+        int day2 = Integer.parseInt(p2[2]);
+        return Integer.compare(day1, day2);
+    }
+
+    private int getMonthNumber(String monthStr) {
+        if (monthStr.matches("\\d+")) return Integer.parseInt(monthStr);
+        String[] months = {"Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktyabr", "Noyabr", "Dekabr"};
+        for (int i = 0; i < months.length; i++) {
+            if (months[i].equalsIgnoreCase(monthStr)) return i + 1;
+        }
+        return 0;
+    }
+
+    public static class StudentWithPayments {
+        private final Student student;
+        private final ComboBox<String> paymentsCombo;
+
+        public StudentWithPayments(Student student, java.util.List<String> paymentDates) {
+            this.student = student;
+            this.paymentsCombo = new ComboBox<>(FXCollections.observableArrayList(paymentDates));
+            this.paymentsCombo.setPrefWidth(160);
+            if (!paymentDates.isEmpty()) {
+                this.paymentsCombo.setPromptText(paymentDates.size() + " ta to'lov");
+            } else {
+                this.paymentsCombo.setPromptText("To'lov yo'q");
+            }
+        }
+
+        public String getName() { return student.getFirstName() + " " + student.getLastName(); }
+        public String getPhone() { return student.getPhone(); }
+        public String getParentName() { return student.getParentName(); }
+        public String getParentPhone() { return student.getParentPhone(); }
+        public String getTelegram() { return student.getTelegramUsername(); }
+        public ComboBox<String> getPaymentsCombo() { return paymentsCombo; }
+        public Student getStudent() { return student; }
     }
 
     private void setupValidationListeners() {
@@ -397,6 +508,30 @@ public class StudentsController implements NavigableController {
         animateSidebar(paymentSidebar, 450);
         overlayPane.setVisible(false);
         resetDeleteConfirmation();
+    }
+
+    @FXML
+    private void onExportAllStudentsPdfClick() {
+        javafx.stage.FileChooser chooser = new javafx.stage.FileChooser();
+        chooser.setTitle("PDF faylni saqlash");
+        chooser.setInitialFileName("barcha_oquvchilar.pdf");
+        chooser.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("PDF fayllar", "*.pdf"));
+
+        java.io.File file = chooser.showSaveDialog(studentsTabPane.getScene().getWindow());
+        if (file == null) return;
+
+        ObservableList<Student> students = StudentService.getAllStudents();
+        students.sort((s1, s2) -> (s1.getFirstName() + " " + s1.getLastName()).compareToIgnoreCase(s2.getFirstName() + " " + s2.getLastName()));
+        
+        java.util.Map<Integer, java.util.List<String>> paymentsMap = PaymentService.getAllStudentPayments();
+
+        try {
+            org.algo.mentor.services.PdfExportService.exportAllStudentsList(students, paymentsMap, file);
+            new Alert(Alert.AlertType.INFORMATION, "PDF muvaffaqiyatli saqlandi!", ButtonType.OK).showAndWait();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            new Alert(Alert.AlertType.ERROR, "Xatolik: " + ex.getMessage(), ButtonType.OK).showAndWait();
+        }
     }
 
     private void resetDeleteConfirmation() {
