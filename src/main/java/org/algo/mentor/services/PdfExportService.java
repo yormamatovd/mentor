@@ -416,7 +416,7 @@ public class PdfExportService {
         table.addHeaderCell(createHeaderCell("Ota-ona ismi"));
         table.addHeaderCell(createHeaderCell("Ota-ona tel"));
         table.addHeaderCell(createHeaderCell("Telegram"));
-        table.addHeaderCell(createHeaderCell("To'lov sanalari"));
+        table.addHeaderCell(createHeaderCell("To'lovlar soni"));
 
         DeviceRgb lightGray = new DeviceRgb(247, 250, 252);
         DeviceRgb white = new DeviceRgb(255, 255, 255);
@@ -426,7 +426,7 @@ public class PdfExportService {
             DeviceRgb rowColor = i % 2 == 1 ? lightGray : white;
 
             List<String> dates = paymentsMap.getOrDefault(s.getId(), java.util.Collections.emptyList());
-            String paymentsStr = String.join(", ", dates);
+            String paymentsStr = dates.isEmpty() ? "to'lov yo'q" : dates.size() + " to'lov";
 
             table.addCell(new Cell().add(new Paragraph(String.valueOf(i + 1))).setBackgroundColor(rowColor).setTextAlignment(TextAlignment.CENTER).setFontSize(8));
             table.addCell(new Cell().add(new Paragraph(s.getFirstName() + " " + s.getLastName())).setBackgroundColor(rowColor).setFontSize(8));

@@ -523,6 +523,50 @@
     -fx-background-color: rgba(255, 255, 255, 0.5);
 }
 
+.modern-tab-pane .tab-header-area {
+    -fx-padding: 10 25 0 25;
+    -fx-background-color: #f8f9fc;
+}
+
+.modern-tab-pane .tab-header-background {
+    -fx-background-color: #edf2f7;
+    -fx-background-radius: 12;
+    -fx-background-insets: 10 0 10 0;
+}
+
+.modern-tab-pane .headers-region {
+    -fx-padding: 10 0 10 0;
+}
+
+.modern-tab-pane .tab {
+    -fx-background-color: transparent;
+    -fx-background-radius: 10;
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+    -fx-transition: all 0.3s ease;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.modern-tab-pane .tab:selected {
+    -fx-background-color: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 2);
+}
+
+.modern-tab-pane .tab .tab-label {
+    -fx-text-fill: #718096;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+}
+
+.modern-tab-pane .tab:selected .tab-label {
+    -fx-text-fill: #3182ce;
+}
+
+.modern-tab-pane .tab:hover:not(:selected) {
+    -fx-background-color: rgba(255, 255, 255, 0.5);
+}
+
 .status-present {
     -fx-background-color: #d1fae5;
     -fx-text-fill: #065f46;

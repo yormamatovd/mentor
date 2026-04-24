@@ -10,7 +10,7 @@
            stylesheets="@../styles/custom.css">
     
     <!-- Main Content -->
-    <TabPane fx:id="studentsTabPane" style="-fx-background-color: #f8f9fc;" tabClosingPolicy="UNAVAILABLE">
+    <TabPane fx:id="studentsTabPane" styleClass="modern-tab-pane" style="-fx-background-color: #f8f9fc;" tabClosingPolicy="UNAVAILABLE">
         <Tab text="Filtrli ko'rinish">
             <VBox spacing="20.0" style="-fx-background-color: #f8f9fc;">
                 <padding>
