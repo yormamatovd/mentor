@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -495,9 +496,22 @@ public class ReportsController implements NavigableController {
             individualAttTable.setItems(FXCollections.observableArrayList(rows));
             
             // Calculate summaries
-            double totalEarned = details.stream().mapToDouble(ReportService.DetailedLessonScore::totalScore).sum();
-            double totalPossible = details.stream().mapToDouble(ReportService.DetailedLessonScore::totalValue).sum();
-            double avgScore = totalPossible == 0 ? 0 : (totalEarned / totalPossible) * 100;
+            // O'zlashtirish = har bir task (test/uy vazifa/savol) foizining oddiy o'rtachasi.
+            // Har bir task teng "vazn"ga ega (katta va kichik balli tasklar bir xil hisoblanadi).
+            List<Double> taskPercents = new ArrayList<>();
+            for (ReportService.DetailedLessonScore d : details) {
+                for (ReportService.TestScore t : d.tests()) {
+                    if (t.total() > 0) taskPercents.add(t.score() / t.total() * 100);
+                }
+                for (ReportService.HomeworkScore h : d.homeworks()) {
+                    if (h.total() > 0) taskPercents.add(h.score() / h.total() * 100);
+                }
+                for (ReportService.QuestionScore q : d.questions()) {
+                    if (q.total() > 0) taskPercents.add(q.score() / q.total() * 100);
+                }
+            }
+            double avgScore = taskPercents.isEmpty() ? 0
+                    : taskPercents.stream().mapToDouble(Double::doubleValue).average().orElse(0);
             
             long presentCount = details.stream().filter(ReportService.DetailedLessonScore::present).count();
             double attRate = details.isEmpty() ? 0 : (double) presentCount / details.size() * 100;
