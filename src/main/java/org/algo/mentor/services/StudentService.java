@@ -293,15 +293,35 @@ public class StudentService {
         }
     }
 
+    // ------------------------------------------------------------------
+    // Faol / Faol emas
+    //
+    // Mijoz talabi: holat yangi "To'lovlar" bo'limidagi belgilarga (monthly_payments:
+    // yil, oy, 1 yoki 15-sana) qarab chiqsin. Belgilangan sanadan boshlab bir oy
+    // davomida o'quvchi faol (masalan 15-oktyabr belgisi 14-noyabrgacha amal qiladi).
+    // Eski "payments" jadvalidagi yozuvlar ham (payment_to_date joriy oyga yetsa) hisobga olinadi.
+    // ------------------------------------------------------------------
+
+    /** Bugun faol bo'lgan o'quvchilar id'larini qaytaruvchi SQL (3 ta parametr: bugun, bugun, oy boshi). */
+    private static final String ACTIVE_STUDENT_IDS_SQL =
+            "SELECT student_id FROM monthly_payments " +
+            "WHERE printf('%04d-%02d-%02d', year, month, payment_day) <= ? " +
+            "  AND date(printf('%04d-%02d-%02d', year, month, payment_day), '+1 month') > ? " +
+            "UNION " +
+            "SELECT student_id FROM payments WHERE payment_to_date >= ?";
+
     public static boolean isStudentPaymentValid(int studentId) {
         try {
             Connection conn = DatabaseManager.getConnection();
+            String today = LocalDate.now().format(DATE_FORMAT);
             String firstDayOfCurrentMonth = LocalDate.now().withDayOfMonth(1).format(DATE_FORMAT);
-            String query = "SELECT COUNT(*) FROM payments WHERE student_id = ? AND payment_to_date >= ?";
+            String query = "SELECT COUNT(*) FROM (" + ACTIVE_STUDENT_IDS_SQL + ") WHERE student_id = ?";
             PreparedStatement pstmt = conn.prepareStatement(query);
-            pstmt.setInt(1, studentId);
-            pstmt.setString(2, firstDayOfCurrentMonth);
-            
+            pstmt.setString(1, today);
+            pstmt.setString(2, today);
+            pstmt.setString(3, firstDayOfCurrentMonth);
+            pstmt.setInt(4, studentId);
+
             ResultSet rs = pstmt.executeQuery();
             boolean hasValidPayment = false;
             if (rs.next()) {
@@ -319,19 +339,22 @@ public class StudentService {
     public static boolean updateStudentPaymentStatus() {
         try {
             Connection conn = DatabaseManager.getConnection();
+            String today = LocalDate.now().format(DATE_FORMAT);
             String firstDayOfCurrentMonth = LocalDate.now().withDayOfMonth(1).format(DATE_FORMAT);
 
-            String activeQuery = "UPDATE students SET is_active = 1 WHERE id IN " +
-                    "(SELECT DISTINCT student_id FROM payments WHERE payment_to_date >= ?)";
+            String activeQuery = "UPDATE students SET is_active = 1 WHERE id IN (" + ACTIVE_STUDENT_IDS_SQL + ")";
             PreparedStatement pstmt1 = conn.prepareStatement(activeQuery);
-            pstmt1.setString(1, firstDayOfCurrentMonth);
+            pstmt1.setString(1, today);
+            pstmt1.setString(2, today);
+            pstmt1.setString(3, firstDayOfCurrentMonth);
             pstmt1.executeUpdate();
             pstmt1.close();
 
-            String inactiveQuery = "UPDATE students SET is_active = 0 WHERE id NOT IN " +
-                    "(SELECT DISTINCT student_id FROM payments WHERE payment_to_date >= ?)";
+            String inactiveQuery = "UPDATE students SET is_active = 0 WHERE id NOT IN (" + ACTIVE_STUDENT_IDS_SQL + ")";
             PreparedStatement pstmt2 = conn.prepareStatement(inactiveQuery);
-            pstmt2.setString(1, firstDayOfCurrentMonth);
+            pstmt2.setString(1, today);
+            pstmt2.setString(2, today);
+            pstmt2.setString(3, firstDayOfCurrentMonth);
             pstmt2.executeUpdate();
             pstmt2.close();
             
